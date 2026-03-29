@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using UnityEngine;
 public class Block {
 
-    public enum BlockType { GRASS, DIRT, STONE, AIR, WATER }
+    public enum BlockType { GRASS, DIRT, STONE, AIR, WATER, HERB, SAND,SNOW, ICE, CACTI}
     public BlockType type;
 
 
@@ -21,7 +21,7 @@ public class Block {
     public Block(BlockType type, Vector3 position) {
         this.type = type;
         this.position = position;
-        isSolid = (type != BlockType.AIR && type != BlockType.WATER);
+        isSolid = (type != BlockType.AIR && type != BlockType.WATER && type != BlockType.HERB);
     }
     // TODO: implementar
     public void AddFaceToMeshData(CubeFace face,
@@ -80,8 +80,25 @@ public class Block {
             (type == BlockType.DIRT) lbc = new Vector2(2f, 15f) / 16;
         else if (type == BlockType.WATER)
             lbc = new Vector2(14f, 2f) / 16;
+
+        else if (type == BlockType.HERB)
+            lbc = new Vector2(10f, 10f) / 16f;
+
+        else if (type == BlockType.SAND)
+            lbc = new Vector2(0f, 4f) / 16f;  
+
+        else if (type == BlockType.SNOW)
+            lbc = new Vector2(2f, 11f) / 16f;  
+
+        else if (type == BlockType.ICE)
+            lbc = new Vector2(3f, 11f) / 16f; 
+
+        else if (type == BlockType.CACTI)
+            lbc = new Vector2(6f, 11f) / 16f;
+
         else 
             lbc = new Vector2(0f, 14f) / 16;
+
         Vector2 uv00 = lbc; // inferior-esquerdo
         Vector2 uv10 = lbc + new Vector2(1f, 0f) / 16; // inferior-direito
         Vector2 uv01 = lbc + new Vector2(0f, 1f) / 16; // superior-esquerdo

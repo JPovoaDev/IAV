@@ -47,16 +47,26 @@ public class WorldManager : MonoBehaviour {
     }
 
     IEnumerator BuildChunks(HashSet<Vector2Int> needed) {
+        List<Chunk> newChunks = new List<Chunk>();
         int count = 0;
 
         foreach (var coord in needed) {
             if (!activeChunks.ContainsKey(coord)) {
-                SpawnChunk(coord);
+                Chunk c = SpawnChunk(coord);
+                
+                newChunks.Add(c);
+                //SpawnChunk(coord);
                 count++;
                 if (count % chunksPerFrame == 0)
                     yield return null; // pausa até ao próximo frame
+                // o yield pausa a corrotina e da o controlo ao unity ate o proximo frame, o problema aqui é que enqunato a corrotina esta pausada o jogador pode se mover e o 
+                //update cancela o update ent os dados que foram spawnados mas parados e nunca chegam a ser desenhados. A solucoa era meter o yeild depois do drawChunks pk mesmo qeu 
+                // a corotina pare pelo menos os chunks sao desenhados.
             }
         }
+        
+        foreach (var chunk in newChunks)
+            chunk.DrawChunk();
     }
 
     HashSet<Vector2Int> GetNeededChunks(Vector2Int center) {
