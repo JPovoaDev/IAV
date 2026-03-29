@@ -54,6 +54,7 @@ public class Chunk : MonoBehaviour {
     void InitializeChunk() {
         chunkData = new Block[chunkSize, chunkSize, chunkSize];
         int[,] surfaceHeight = new int[chunkSize, chunkSize]; // guardar altura da superfície
+        int[,] biome = new int[chunkSize, chunkSize];// 0= normal 1= deserto 2= neve
 
         // determinar solid/ar com carving
         for (int x = 0; x < chunkSize; x++)
@@ -65,9 +66,18 @@ public class Chunk : MonoBehaviour {
                 // Este layer decide "isto é oceano ou continente?"
                 float continentalness = FBm(nx, nz, 2, continentalnessScale);
 
-                // Layer 2: BASE HEIGHT (escala média - forma do terreno)
-                // Este layer define montanhas, vales, colinas dentro de cada região
-                float baseHeight = FBm(nx, nz, octaves, scale);
+                float biomeNoise = FBm(nx, nz, 1, 0.005f);// a escala é muito pequena para os biomas grandes
+                if (biomeNoise < 0.30)
+                    biome[x, z] = 1;//deserto
+                else if (biomeNoise > 0.70)
+                    biome[x, z] = 2;//neve
+                else
+                    biome[x, z] = 0; //normal
+
+
+                    // Layer 2: BASE HEIGHT (escala média - forma do terreno)
+                    // Este layer define montanhas, vales, colinas dentro de cada região
+                    float baseHeight = FBm(nx, nz, octaves, scale);
                 baseHeight = Mathf.Pow(baseHeight, heightPeakExponent); // valor maior = cria montanhas mais raras e mais marcadas
 
                 // Layer 3: DETAIL (escala pequena - rugosidade)
@@ -137,28 +147,77 @@ public class Chunk : MonoBehaviour {
                 for (int z = 0; z < chunkSize; z++) {
                     if (!chunkData[x, y, z].isSolid)
                         continue;
+
+                    bool aboveIsAir = (y + 1 >= chunkSize) || !chunkData[x, y + 1, z].isSolid;
+                    bool isSurface = aboveIsAir && y >= surfaceHeight[x, z] - margin;
+                    bool isCaveWall = aboveIsAir && y < surfaceHeight[x, z] - margin;
+
                     Block.BlockType type;
-                    if (y <= 2) {
+
+                    if (y <= 2)
+                    {
                         type = Block.BlockType.STONE;
-                    } else {
-                        bool aboveIsAir = (y + 1 >= chunkSize) || !chunkData[x, y + 1, z].isSolid;
-                        // se está abaixo da superfície e tem vizinho ar, é interior de gruta
-                        if (aboveIsAir && y < surfaceHeight[x, z] - margin) {
-                            type = Block.BlockType.STONE;
-                        } else {
-                            type = aboveIsAir ? Block.BlockType.GRASS : Block.BlockType.DIRT;
+                    }
+                    else if (isCaveWall)
+                    {
+                        type = Block.BlockType.STONE;
+                    }
+                    else if (isSurface)
+                    {
+                        // aqui aplicamos os biomas
+                        switch (biome[x, z])
+                        {
+                            case 1: type = Block.BlockType.SAND; break; // deserto
+                            case 2: type = Block.BlockType.SNOW; break; // neve
+                            default: type = Block.BlockType.GRASS; break; // normal
                         }
                     }
+                    else
+                    {
+                        // subsuperfície também muda com o bioma
+                        type = biome[x, z] == 1 ? Block.BlockType.SAND : Block.BlockType.DIRT;
+                    }
+
                     chunkData[x, y, z] = new Block(type, new Vector3(x, y, z));
                 }
 
-        // meter água
+        // meter água e neve no bioma de neve
         for (int x = 0; x < chunkSize; x++)
             for (int y = 0; y < chunkSize; y++)
-                for (int z = 0; z < chunkSize; z++) {
-                    if (chunkData[x, y, z].type == Block.BlockType.AIR && y < seaLevel)
-                        chunkData[x, y, z] = new Block(Block.BlockType.WATER, new Vector3(x, y, z));
+                for (int z = 0; z < chunkSize; z++)
+                {
+                    if (chunkData[x, y, z].type != Block.BlockType.AIR) continue;
+                    if (y >= seaLevel) continue;
+
+                    // gelo no bioma neve, água nos outros
+                    Block.BlockType waterType = biome[x, z] == 2
+                        ? Block.BlockType.ICE
+                        : Block.BlockType.WATER;
+
+                    chunkData[x, y, z] = new Block(waterType, new Vector3(x, y, z));
                 }
+
+        //meter a ervinha com porbablidade de 30 porcento em cima do bloco erva, e o cacto no bioma de deserto
+        for (int x = 0; x < chunkSize; x++)
+            for (int z = 0; z < chunkSize; z++)
+            {
+                int y = surfaceHeight[x, z];
+                if (y + 1 >= chunkSize) continue;
+
+                switch (biome[x, z])
+                {
+                    case 0: // normal — erva
+                        if (chunkData[x, y, z].type == Block.BlockType.GRASS && Random.value < 0.01f)
+                            chunkData[x, y + 1, z] = new Block(Block.BlockType.HERB, new Vector3(x, y + 1, z));
+                        break;
+                    case 1: // deserto — cactos (menos frequentes)
+                        if (chunkData[x, y, z].type == Block.BlockType.SAND && Random.value < 0.005f)
+                            chunkData[x, y + 1, z] = new Block(Block.BlockType.CACTI, new Vector3(x, y + 1, z));
+                        break;
+                    case 2: // neve — sem vegetação
+                        break;
+                }
+            }
     }
 
     void CarveWorm(Vector3 start, int steps, float radius, float stepSize, float directionScale) {
@@ -197,7 +256,7 @@ public class Chunk : MonoBehaviour {
                     int bz = localZ + dz;
 
                     if (bx >= 0 && bx < chunkSize &&
-                        by > 1 && by < chunkSize &&
+                        by > 1 && by < chunkSize - margin &&//protege a superfice para o wormm n sair para a superficie, para n cavar a superficie e n fazer buracos la 
                         bz >= 0 && bz < chunkSize)
                         chunkData[bx, by, bz] = new Block(Block.BlockType.AIR, new Vector3(bx, by, bz));
                 }
@@ -300,6 +359,16 @@ public class Chunk : MonoBehaviour {
                     if (IsAir(x, y - 1, z)) block.AddFaceToMeshData(Block.CubeFace.Bottom, vertices, triangles, uvs);
                     if (IsAir(x - 1, y, z)) block.AddFaceToMeshData(Block.CubeFace.Left, vertices, triangles, uvs);
                     if (IsAir(x + 1, y, z)) block.AddFaceToMeshData(Block.CubeFace.Right, vertices, triangles, uvs);
+                }
+        // Loop erva 
+        for (int x = 0; x < chunkSize; x++)
+            for (int y = 0; y < chunkSize; y++)
+                for (int z = 0; z < chunkSize; z++)
+                {
+                    if (chunkData[x, y, z].type != Block.BlockType.HERB) continue;
+                    Block block = chunkData[x, y, z];
+                    block.AddFaceToMeshData(Block.CubeFace.Front, vertices, triangles, uvs);
+                    block.AddFaceToMeshData(Block.CubeFace.Back, vertices, triangles, uvs);
                 }
 
         // 3. Criar a mesh de render e atribuir os arrays
