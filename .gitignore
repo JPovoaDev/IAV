@@ -99,7 +99,6 @@ InitTestScene*.unity*
 /[Aa]ssets/[Ii]nit[Tt]est[Ss]cene*.unity*
 
 mlagents-env/
-results/
 Library/
 Temp/
 obj/

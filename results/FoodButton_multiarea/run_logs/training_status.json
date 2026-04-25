@@ -1,0 +1,38 @@
+{
+    "FoodButton": {
+        "checkpoints": [
+            {
+                "steps": 499997,
+                "file_path": "results\\FoodButton_multiarea\\FoodButton\\FoodButton-499997.onnx",
+                "reward": 1.4900286027363367,
+                "creation_time": 1777055631.9238498,
+                "auxillary_file_paths": [
+                    "results\\FoodButton_multiarea\\FoodButton\\FoodButton-499997.pt"
+                ]
+            },
+            {
+                "steps": 500003,
+                "file_path": "results\\FoodButton_multiarea\\FoodButton\\FoodButton-500003.onnx",
+                "reward": 1.4905750304460526,
+                "creation_time": 1777055631.9687388,
+                "auxillary_file_paths": [
+                    "results\\FoodButton_multiarea\\FoodButton\\FoodButton-500003.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 500003,
+            "file_path": "results\\FoodButton_multiarea\\FoodButton.onnx",
+            "reward": 1.4905750304460526,
+            "creation_time": 1777055631.9687388,
+            "auxillary_file_paths": [
+                "results\\FoodButton_multiarea\\FoodButton\\FoodButton-500003.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}

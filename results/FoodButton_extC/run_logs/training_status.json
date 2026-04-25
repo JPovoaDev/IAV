@@ -1,0 +1,29 @@
+{
+    "FoodButton": {
+        "checkpoints": [
+            {
+                "steps": 379423,
+                "file_path": "results\\FoodButton_extC\\FoodButton\\FoodButton-379423.onnx",
+                "reward": null,
+                "creation_time": 1777118205.966164,
+                "auxillary_file_paths": [
+                    "results\\FoodButton_extC\\FoodButton\\FoodButton-379423.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 379423,
+            "file_path": "results\\FoodButton_extC\\FoodButton.onnx",
+            "reward": null,
+            "creation_time": 1777118205.966164,
+            "auxillary_file_paths": [
+                "results\\FoodButton_extC\\FoodButton\\FoodButton-379423.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.2.2+cpu"
+    }
+}
