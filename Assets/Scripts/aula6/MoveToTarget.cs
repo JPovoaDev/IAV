@@ -36,7 +36,13 @@ public class MoveToTarget : Agent
     }
     public override void OnActionReceived(ActionBuffers actions)
     {
-        int action = actions.DiscreteActions[0];
+        // para multiarea:
+        float moveX = actions.ContinuousActions[0];
+        float moveZ = actions.ContinuousActions[1];
+        transform.position += new Vector3(moveX, 0, moveZ) * Time.deltaTime * moveSpeed;
+
+        // para discreto
+        /*int action = actions.DiscreteActions[0];
         Vector3 move = Vector3.zero;
 
         switch (action)
@@ -47,17 +53,23 @@ public class MoveToTarget : Agent
             case 4: move = Vector3.right; break;
         }
 
-        transform.position += move * Time.deltaTime * moveSpeed;
+        transform.position += move * Time.deltaTime * moveSpeed;*/
     }
 
     public override void Heuristic(in ActionBuffers actionsOut)
     {
-        var da = actionsOut.DiscreteActions;
+        // para multiarea:
+        var ca = actionsOut.ContinuousActions;
+        ca[0] = Input.GetAxis("Horizontal");
+        ca[1] = Input.GetAxis("Vertical");
+
+        // para discreto
+        /*var da = actionsOut.DiscreteActions;
         da[0] = 0;
         if (Input.GetKey(KeyCode.W)) da[0] = 1;
         if (Input.GetKey(KeyCode.S)) da[0] = 2;
         if (Input.GetKey(KeyCode.A)) da[0] = 3;
-        if (Input.GetKey(KeyCode.D)) da[0] = 4;
+        if (Input.GetKey(KeyCode.D)) da[0] = 4;*/
     }
 
     private void OnTriggerEnter(Collider other)
