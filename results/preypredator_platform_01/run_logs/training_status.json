@@ -1,0 +1,71 @@
+{
+    "Predator": {
+        "checkpoints": [
+            {
+                "steps": 499940,
+                "file_path": "results\\preypredator_platform_01\\Predator\\Predator-499940.onnx",
+                "reward": 1.276144518135962,
+                "creation_time": 1778281171.0156147,
+                "auxillary_file_paths": [
+                    "results\\preypredator_platform_01\\Predator\\Predator-499940.pt"
+                ]
+            },
+            {
+                "steps": 506778,
+                "file_path": "results\\preypredator_platform_01\\Predator\\Predator-506778.onnx",
+                "reward": 1.2086443866903693,
+                "creation_time": 1778281403.8217673,
+                "auxillary_file_paths": [
+                    "results\\preypredator_platform_01\\Predator\\Predator-506778.pt"
+                ]
+            }
+        ],
+        "elo": 1526.7577542481993,
+        "final_checkpoint": {
+            "steps": 506778,
+            "file_path": "results\\preypredator_platform_01\\Predator.onnx",
+            "reward": 1.2086443866903693,
+            "creation_time": 1778281403.8217673,
+            "auxillary_file_paths": [
+                "results\\preypredator_platform_01\\Predator\\Predator-506778.pt"
+            ]
+        }
+    },
+    "Prey": {
+        "checkpoints": [
+            {
+                "steps": 499823,
+                "file_path": "results\\preypredator_platform_01\\Prey\\Prey-499823.onnx",
+                "reward": 1.0,
+                "creation_time": 1778281389.7411382,
+                "auxillary_file_paths": [
+                    "results\\preypredator_platform_01\\Prey\\Prey-499823.pt"
+                ]
+            },
+            {
+                "steps": 501153,
+                "file_path": "results\\preypredator_platform_01\\Prey\\Prey-501153.onnx",
+                "reward": 1.5862068965517242,
+                "creation_time": 1778281403.982451,
+                "auxillary_file_paths": [
+                    "results\\preypredator_platform_01\\Prey\\Prey-501153.pt"
+                ]
+            }
+        ],
+        "elo": 1414.6501885377943,
+        "final_checkpoint": {
+            "steps": 501153,
+            "file_path": "results\\preypredator_platform_01\\Prey.onnx",
+            "reward": 1.5862068965517242,
+            "creation_time": 1778281403.982451,
+            "auxillary_file_paths": [
+                "results\\preypredator_platform_01\\Prey\\Prey-501153.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "1.13.1+cpu"
+    }
+}

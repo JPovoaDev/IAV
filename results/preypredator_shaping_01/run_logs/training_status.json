@@ -1,0 +1,53 @@
+{
+    "Predator": {
+        "elo": 1502.0257625570578,
+        "checkpoints": [
+            {
+                "steps": 200281,
+                "file_path": "results\\preypredator_shaping_01\\Predator\\Predator-200281.onnx",
+                "reward": 1.2152227376035036,
+                "creation_time": 1778276538.3567886,
+                "auxillary_file_paths": [
+                    "results\\preypredator_shaping_01\\Predator\\Predator-200281.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 200281,
+            "file_path": "results\\preypredator_shaping_01\\Predator.onnx",
+            "reward": 1.2152227376035036,
+            "creation_time": 1778276538.3567886,
+            "auxillary_file_paths": [
+                "results\\preypredator_shaping_01\\Predator\\Predator-200281.pt"
+            ]
+        }
+    },
+    "Prey": {
+        "elo": 1128.8631483533093,
+        "checkpoints": [
+            {
+                "steps": 103872,
+                "file_path": "results\\preypredator_shaping_01\\Prey\\Prey-103872.onnx",
+                "reward": null,
+                "creation_time": 1778276538.4639933,
+                "auxillary_file_paths": [
+                    "results\\preypredator_shaping_01\\Prey\\Prey-103872.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 103872,
+            "file_path": "results\\preypredator_shaping_01\\Prey.onnx",
+            "reward": null,
+            "creation_time": 1778276538.4639933,
+            "auxillary_file_paths": [
+                "results\\preypredator_shaping_01\\Prey\\Prey-103872.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "1.13.1+cpu"
+    }
+}

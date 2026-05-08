@@ -1,0 +1,105 @@
+{
+    "Predator": {
+        "checkpoints": [
+            {
+                "steps": 499952,
+                "file_path": "results\\preypredator_no_selfplay_01\\Predator\\Predator-499952.onnx",
+                "reward": -7.7272727272727275,
+                "creation_time": 1778269901.7960653,
+                "auxillary_file_paths": [
+                    "results\\preypredator_no_selfplay_01\\Predator\\Predator-499952.pt"
+                ]
+            },
+            {
+                "steps": 999992,
+                "file_path": "results\\preypredator_no_selfplay_01\\Predator\\Predator-999992.onnx",
+                "reward": -6.802197802197802,
+                "creation_time": 1778270889.1691277,
+                "auxillary_file_paths": [
+                    "results\\preypredator_no_selfplay_01\\Predator\\Predator-999992.pt"
+                ]
+            },
+            {
+                "steps": 1499743,
+                "file_path": "results\\preypredator_no_selfplay_01\\Predator\\Predator-1499743.onnx",
+                "reward": -1.5034013605442176,
+                "creation_time": 1778271880.6762393,
+                "auxillary_file_paths": [
+                    "results\\preypredator_no_selfplay_01\\Predator\\Predator-1499743.pt"
+                ]
+            },
+            {
+                "steps": 1920015,
+                "file_path": "results\\preypredator_no_selfplay_01\\Predator\\Predator-1920015.onnx",
+                "reward": -0.46464646464646464,
+                "creation_time": 1778272739.6892645,
+                "auxillary_file_paths": [
+                    "results\\preypredator_no_selfplay_01\\Predator\\Predator-1920015.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 1920015,
+            "file_path": "results\\preypredator_no_selfplay_01\\Predator.onnx",
+            "reward": -0.46464646464646464,
+            "creation_time": 1778272739.6892645,
+            "auxillary_file_paths": [
+                "results\\preypredator_no_selfplay_01\\Predator\\Predator-1920015.pt"
+            ]
+        }
+    },
+    "Prey": {
+        "checkpoints": [
+            {
+                "steps": 499952,
+                "file_path": "results\\preypredator_no_selfplay_01\\Prey\\Prey-499952.onnx",
+                "reward": 7.7272727272727275,
+                "creation_time": 1778269901.8840654,
+                "auxillary_file_paths": [
+                    "results\\preypredator_no_selfplay_01\\Prey\\Prey-499952.pt"
+                ]
+            },
+            {
+                "steps": 999992,
+                "file_path": "results\\preypredator_no_selfplay_01\\Prey\\Prey-999992.onnx",
+                "reward": 6.802197802197802,
+                "creation_time": 1778270891.397859,
+                "auxillary_file_paths": [
+                    "results\\preypredator_no_selfplay_01\\Prey\\Prey-999992.pt"
+                ]
+            },
+            {
+                "steps": 1499743,
+                "file_path": "results\\preypredator_no_selfplay_01\\Prey\\Prey-1499743.onnx",
+                "reward": 1.5034013605442176,
+                "creation_time": 1778271880.7685363,
+                "auxillary_file_paths": [
+                    "results\\preypredator_no_selfplay_01\\Prey\\Prey-1499743.pt"
+                ]
+            },
+            {
+                "steps": 1920015,
+                "file_path": "results\\preypredator_no_selfplay_01\\Prey\\Prey-1920015.onnx",
+                "reward": 0.46464646464646464,
+                "creation_time": 1778272739.7797196,
+                "auxillary_file_paths": [
+                    "results\\preypredator_no_selfplay_01\\Prey\\Prey-1920015.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 1920015,
+            "file_path": "results\\preypredator_no_selfplay_01\\Prey.onnx",
+            "reward": 0.46464646464646464,
+            "creation_time": 1778272739.7797196,
+            "auxillary_file_paths": [
+                "results\\preypredator_no_selfplay_01\\Prey\\Prey-1920015.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "1.13.1+cpu"
+    }
+}

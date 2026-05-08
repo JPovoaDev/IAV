@@ -10,6 +10,8 @@ TagManager:
   - Button
   - Button2
   - Platform
+  - Prey
+  - Predator
   layers:
   - Default
   - TransparentFX
