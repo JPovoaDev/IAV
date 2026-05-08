@@ -104,4 +104,4 @@ Temp/
 obj/
 Build/
 Builds/
-Logs/
+Logs/venv/ 
