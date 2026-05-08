@@ -1,0 +1,10 @@
+{
+    "step_count": {
+        "lesson_num": 3
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.11.0+cpu"
+    }
+}

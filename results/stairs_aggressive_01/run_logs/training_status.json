@@ -1,0 +1,32 @@
+{
+    "step_count": {
+        "lesson_num": 1
+    },
+    "StairsAgent": {
+        "checkpoints": [
+            {
+                "steps": 106212,
+                "file_path": "results\\stairs_aggressive_01\\StairsAgent\\StairsAgent-106212.onnx",
+                "reward": -0.9996000453829765,
+                "creation_time": 1778249433.3040879,
+                "auxillary_file_paths": [
+                    "results\\stairs_aggressive_01\\StairsAgent\\StairsAgent-106212.pt"
+                ]
+            }
+        ],
+        "final_checkpoint": {
+            "steps": 106212,
+            "file_path": "results\\stairs_aggressive_01\\StairsAgent.onnx",
+            "reward": -0.9996000453829765,
+            "creation_time": 1778249433.3040879,
+            "auxillary_file_paths": [
+                "results\\stairs_aggressive_01\\StairsAgent\\StairsAgent-106212.pt"
+            ]
+        }
+    },
+    "metadata": {
+        "stats_format_version": "0.3.0",
+        "mlagents_version": "1.1.0",
+        "torch_version": "2.3.1+cpu"
+    }
+}

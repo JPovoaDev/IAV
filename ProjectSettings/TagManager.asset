@@ -9,6 +9,7 @@ TagManager:
   - Food
   - Button
   - Button2
+  - Platform
   layers:
   - Default
   - TransparentFX

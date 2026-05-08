@@ -1,0 +1,42 @@
+{
+    "name": "root",
+    "metadata": {
+        "timer_format_version": "0.1.0",
+        "start_time_seconds": "1778249654",
+        "python_version": "3.10.9 (tags/v3.10.9:1dd9be6, Dec  6 2022, 20:01:21) [MSC v.1934 64 bit (AMD64)]",
+        "command_line_arguments": "C:\\Users\\olavo\\OneDrive\\Documentos\\GitHub\\IAV\\venv\\Scripts\\mlagents-learn StairsAgent_curriculum.yaml --run-id=stairs_shaping_01",
+        "mlagents_version": "1.1.0",
+        "mlagents_envs_version": "1.1.0",
+        "communication_protocol_version": "1.5.0",
+        "pytorch_version": "2.3.1+cpu",
+        "numpy_version": "1.23.0",
+        "end_time_seconds": "1778249718"
+    },
+    "total": 63.73014349999721,
+    "count": 1,
+    "self": 0.030396099988138303,
+    "children": {
+        "run_training.setup": {
+            "total": 0.18194940000830684,
+            "count": 1,
+            "self": 0.18194940000830684
+        },
+        "TrainerController.start_learning": {
+            "total": 63.51779800000077,
+            "count": 1,
+            "self": 0.00023280001187231392,
+            "children": {
+                "TrainerController._reset_env": {
+                    "total": 63.5175378999993,
+                    "count": 1,
+                    "self": 63.5175378999993
+                },
+                "TrainerController._save_models": {
+                    "total": 2.7299989596940577e-05,
+                    "count": 1,
+                    "self": 2.7299989596940577e-05
+                }
+            }
+        }
+    }
+}
