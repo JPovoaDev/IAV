@@ -12,6 +12,9 @@ TagManager:
   - Platform
   - Prey
   - Predator
+  - Checkpoint
+  - DeathZone
+  - Goal
   layers:
   - Default
   - TransparentFX
