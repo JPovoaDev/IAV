@@ -1,59 +1,181 @@
-﻿using UnityEngine;
+﻿// ParkourArena.cs
+using UnityEngine;
 
-public class ParkourArena : MonoBehaviour
-{
-    public ParkourAgent agent;
-    public PlatformSpawner spawner;  // ← adicionar esta referência
+public class ParkourArena : MonoBehaviour {
+    [Header("Agentes")]
+    public ParkourAgent[] agents;
+    public SaboteurAgent saboteur;
 
+    [Header("Spawner")]
+    public PlatformSpawner spawner;
+
+    [Header("Feedback Visual")]
     public MeshRenderer floorRenderer;
-    public Material defaultMaterial, winMaterial, loseMaterial;
+    public Material defaultMaterial;
+    public Material winMaterial;         // verde  — parkour chegou ao goal
+    public Material loseMaterial;        // vermelho — agente caiu
+    public Material saboteurWinMaterial; // laranja — saboteur chegou ao goal
+
+    [Header("Episódio")]
+    public int maxEpisodeSteps = 5000;
 
     private CheckpointTrigger[] checkpoints;
-    private int nextCheckpointIndex = 0;
+    private int stepCount;
+    private bool episodeReady = false;
+    private int agentsFinished = 0;
+    private Coroutine flashCoroutine;
 
-    public void ResetEpisode()
-    {
-        // Reconstruir percurso com novo gap do currículo
-        spawner.BuildCourse();
+    private bool SaboteurActive =>
+        saboteur != null && saboteur.gameObject.activeInHierarchy;
 
-        // Buscar os checkpoints recém criados
-        checkpoints = spawner.GetCheckpoints();
-
-        nextCheckpointIndex = 0;
-
-    
-
-        // Atualizar primeiro alvo do agente
-        if (checkpoints.Length > 0)
-            agent.nextPlatformTarget = checkpoints[0].transform;
+    private void FlashFloor(Material mat, float duration = 1f) {
+        if (flashCoroutine != null) StopCoroutine(flashCoroutine);
+        flashCoroutine = StartCoroutine(FlashRoutine(mat, duration));
     }
 
-    public float OnCheckpointHit(int index, bool isGoal)
-    {
-        if (index != nextCheckpointIndex) return 0f;
+    private System.Collections.IEnumerator FlashRoutine(Material mat, float duration) {
+        floorRenderer.material = mat;
+        yield return new WaitForSeconds(duration);
+        floorRenderer.material = defaultMaterial;
+        flashCoroutine = null;
+    }
 
-        checkpoints[index].Activate();
-        nextCheckpointIndex++;
+    private void Start() {
+        BuildAndReset();
+        episodeReady = true;
+    }
 
-        // Atualizar próximo alvo
-        if (nextCheckpointIndex < checkpoints.Length)
-            agent.nextPlatformTarget = checkpoints[nextCheckpointIndex].transform;
+    private void FixedUpdate() {
+        if (!episodeReady) return;
+        stepCount++;
+        if (stepCount >= maxEpisodeSteps)
+            FullReset("timeout");
+    }
 
-        if (isGoal)
-        {
-            if (floorRenderer != null) floorRenderer.material = winMaterial;
-            return 1f;
+
+    public void OnSaboteurFell() {
+        if (!episodeReady || !SaboteurActive) return;
+        FlashFloor(loseMaterial);
+        saboteur.pendingSpawn = spawner.AgentSpawnPosition +
+            new Vector3(Random.Range(-0.5f, 0.5f), 0f, 0f);
+        saboteur.hasPendingSpawn = true;
+        saboteur.EndEpisode();
+    }
+
+    public void OnSaboteurGoal() {
+        if (!episodeReady || !SaboteurActive) return;
+        FlashFloor(saboteurWinMaterial);
+        FullReset("saboteur_won");
+    }
+
+    public void OnCheckpointHit(ParkourAgent agent, CheckpointTrigger cp) {
+        if (!episodeReady) return;
+        if (cp.checkpointIndex != agent.nextCheckpointIdx) return;
+
+        cp.Activate();
+        agent.nextCheckpointIdx++;
+
+        if (!cp.isGoal) {
+            agent.AddReward(agent.checkpointReward);
+            agent.nextPlatformTarget = checkpoints[agent.nextCheckpointIdx].transform;
+            return;
         }
 
-        return 0.3f;
+        // Chegou ao goal
+        agent.AddReward(agent.goalReward);
+        FlashFloor(winMaterial);
+        agentsFinished++;
+
+        agent.pendingSpawn = spawner.AgentSpawnPosition +
+            new Vector3(Random.Range(-0.5f, 0.5f), 0f, 0f);
+        agent.hasPendingSpawn = true;
+        agent.nextPlatformTarget = checkpoints[0].transform;
+        agent.EndEpisode();
+
+        if (agentsFinished >= agents.Length)
+            FullReset("all_finished");
     }
 
-    public void OnAgentDied()
-    {
-        Debug.Log("OnAgentDied chamado!");
-        if (floorRenderer != null)
-            floorRenderer.material = loseMaterial;
-        else
-            Debug.LogError("floorRenderer é null!");
+    public void OnAgentFell(ParkourAgent agent) {
+        if (!episodeReady) return;
+        agent.AddReward(-agent.fallPenalty);
+
+        if (agent.wasRecentlyPushed && SaboteurActive)
+            saboteur.OnTargetFell();
+
+        FlashFloor(loseMaterial);
+
+        for (int i = 0; i < agent.nextCheckpointIdx; i++)
+            checkpoints[i].Reset();
+
+        agent.pendingSpawn = spawner.AgentSpawnPosition +
+            new Vector3(Random.Range(-0.5f, 0.5f), 0f, 0f);
+        agent.hasPendingSpawn = true;
+        agent.nextCheckpointIdx = 0;
+        agent.nextPlatformTarget = checkpoints[0].transform;
+        agent.EndEpisode();
+    }
+
+    public void OnCheckpointHitSaboteur(CheckpointTrigger cp) {
+        if (!episodeReady || !SaboteurActive) return;
+        if (cp.checkpointIndex != saboteur.nextCheckpointIdx) return;
+
+        cp.Activate();
+        saboteur.nextCheckpointIdx++;
+
+        if (!cp.isGoal) {
+            saboteur.AddReward(saboteur.checkpointReward);
+            saboteur.nextPlatformTarget = checkpoints[saboteur.nextCheckpointIdx].transform;
+            return;
+        }
+
+        saboteur.AddReward(saboteur.goalReward);
+        OnSaboteurGoal();
+    }
+
+
+    private void FullReset(string reason) {
+        episodeReady = false;
+        agentsFinished = 0;
+
+        Debug.Log("FullReset: " + reason);
+
+        foreach (var a in agents) {
+            if (a == null) continue;
+            a.pendingSpawn = spawner.AgentSpawnPosition +
+                new Vector3(Random.Range(-0.5f, 0.5f), 0f, 0f);
+            a.hasPendingSpawn = true;
+            a.EndEpisode();
+        }
+
+        if (SaboteurActive) {
+            saboteur.pendingSpawn = spawner.AgentSpawnPosition +
+                new Vector3(Random.Range(-0.5f, 0.5f), 0f, 0f);
+            saboteur.hasPendingSpawn = true;
+            saboteur.EndEpisode();
+        }
+
+        BuildAndReset();
+        episodeReady = true;
+    }
+
+    private void BuildAndReset() {
+        stepCount = 0;
+        agentsFinished = 0;
+        spawner.BuildCourse();
+        checkpoints = spawner.GetCheckpoints();
+
+        foreach (var a in agents) {
+            if (a == null) continue;
+            a.nextCheckpointIdx = 0;
+            a.nextPlatformTarget = checkpoints[0].transform;
+        }
+
+        if (SaboteurActive) {
+            saboteur.nextCheckpointIdx = 0;
+            saboteur.nextPlatformTarget = checkpoints[0].transform;
+        }
+
+        floorRenderer.material = defaultMaterial;
     }
 }

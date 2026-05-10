@@ -4,35 +4,33 @@ using Unity.MLAgents.Sensors;
 using Unity.MLAgents.Actuators;
 
 [RequireComponent(typeof(Rigidbody))]
-public class ParkourAgent : Agent {
+public class SaboteurAgent : Agent {
     [Header("Arena")]
     public ParkourArena arena;
 
-    [Header("Observações")]
-    public Transform nextPlatformTarget;
+    [Header("Alvos a sabotar")]
+    public ParkourAgent[] targets;
 
     [Header("Movimento")]
-    public float moveSpeed = 4f;
+    public float moveSpeed = 5f;
     public float jumpForce = 5f;
 
     [Header("Recompensas")]
-    public float timePenaltyPerStep = -0.001f;
+    public float timePenaltyPerStep = -0.0002f;
     public float stillPenaltyThreshold = 0.5f;
-    public float stayStillPenalty = -0.002f;
-    public float fallPenalty = 1f;
+    public float stayStillPenalty = -0.001f;
+    public float targetFellReward = 0.3f;
     public float checkpointReward = 0.3f;
     public float goalReward = 1f;
 
     [HideInInspector] public int nextCheckpointIdx = 0;
+    [HideInInspector] public Transform nextPlatformTarget;
     [HideInInspector] public Vector3 pendingSpawn;
     [HideInInspector] public bool hasPendingSpawn = false;
 
-    [HideInInspector] public bool wasRecentlyPushed = false;
-    private float pushTimer = 0f;
-    private const float pushWindow = 2f;
-
     private Rigidbody rb;
     private bool canJump = false;
+    private Transform currentTarget;
 
 
     public override void Initialize() {
@@ -54,45 +52,47 @@ public class ParkourAgent : Agent {
         rb.angularVelocity = Vector3.zero;
         canJump = false;
         nextCheckpointIdx = 0;
-        wasRecentlyPushed = false;
-        pushTimer = 0f;
 
         if (hasPendingSpawn) {
             transform.position = pendingSpawn;
             rb.position = pendingSpawn;
             hasPendingSpawn = false;
         }
+
+        UpdateNearestTarget();
     }
 
-    private void Update() {
-        if (wasRecentlyPushed) {
-            pushTimer -= Time.deltaTime;
-            if (pushTimer <= 0f) wasRecentlyPushed = false;
-        }
-    }
-
-    public void RegisterPush() {
-        wasRecentlyPushed = true;
-        pushTimer = pushWindow;
-    }
+    public void ResetState() => UpdateNearestTarget();
+    public void OnTargetFell() => AddReward(targetFellReward);
 
     public override void CollectObservations(VectorSensor sensor) {
+        UpdateNearestTarget();
+
         Vector3 vel = rb.linearVelocity;
         sensor.AddObservation(vel.x / moveSpeed);                         // 1
         sensor.AddObservation(vel.y / jumpForce);                         // 2
         sensor.AddObservation(vel.z / moveSpeed);                         // 3
 
         if (nextPlatformTarget != null) {
-            Vector3 toTarget = nextPlatformTarget.position - transform.position;
-            sensor.AddObservation(toTarget.normalized);                   // 4,5,6
-            sensor.AddObservation(toTarget.magnitude / 20f);              // 7
+            Vector3 toGoal = nextPlatformTarget.position - transform.position;
+            sensor.AddObservation(toGoal.normalized);                     // 4,5,6
+            sensor.AddObservation(toGoal.magnitude / 20f);                // 7
         } else {
             sensor.AddObservation(Vector3.zero);                          // 4,5,6
             sensor.AddObservation(0f);                                    // 7
         }
 
-        sensor.AddObservation(transform.position.y / 10f);               // 8
-        sensor.AddObservation(Mathf.Clamp(vel.y / jumpForce, -1f, 1f)); // 9
+        if (currentTarget != null) {
+            Vector3 toTarget = currentTarget.position - transform.position;
+            sensor.AddObservation(toTarget.normalized);                   // 8,9,10
+            sensor.AddObservation(toTarget.magnitude / 20f);              // 11
+        } else {
+            sensor.AddObservation(Vector3.zero);                          // 8,9,10
+            sensor.AddObservation(0f);                                    // 11
+        }
+
+        sensor.AddObservation(transform.position.y / 10f);               // 12
+        sensor.AddObservation(Mathf.Clamp(vel.y / jumpForce, -1f, 1f)); // 13
     }
 
 
@@ -115,8 +115,8 @@ public class ParkourAgent : Agent {
         if (speed2D < stillPenaltyThreshold)
             AddReward(stayStillPenalty);
 
-        if (transform.position.y < -3f && !hasPendingSpawn)
-            arena.OnAgentFell(this);
+        if (transform.position.y < -3f)
+            arena.OnSaboteurFell();
     }
 
     public override void Heuristic(in ActionBuffers actionsOut) {
@@ -127,9 +127,20 @@ public class ParkourAgent : Agent {
         da[0] = Input.GetKey(KeyCode.Space) ? 1 : 0;
     }
 
+
     private void OnCollisionEnter(Collision collision) {
         if (collision.gameObject.CompareTag("Platform"))
             canJump = true;
+
+        if (collision.gameObject.CompareTag("ParkourAgent")) {
+            Rigidbody targetRb = collision.gameObject.GetComponent<Rigidbody>();
+            Vector3 pushDir = collision.transform.position - transform.position;
+            pushDir.y = 0.3f;
+            pushDir.Normalize();
+            targetRb.AddForce(pushDir * 8f, ForceMode.Impulse);
+
+            collision.gameObject.GetComponent<ParkourAgent>().RegisterPush();
+        }
     }
 
     private void OnCollisionExit(Collision collision) {
@@ -140,9 +151,20 @@ public class ParkourAgent : Agent {
     private void OnTriggerEnter(Collider other) {
         if (other.CompareTag("Checkpoint") || other.CompareTag("Goal")) {
             var cp = other.GetComponent<CheckpointTrigger>();
-            if (cp != null) arena.OnCheckpointHit(this, cp);
+            if (cp != null) arena.OnCheckpointHitSaboteur(cp);
         }
         if (other.CompareTag("DeathZone"))
-            arena.OnAgentFell(this);
+            arena.OnSaboteurFell();
+    }
+
+
+    private void UpdateNearestTarget() {
+        float minDist = float.MaxValue;
+        currentTarget = null;
+        foreach (var t in targets) {
+            if (t == null) continue;
+            float dist = Vector3.Distance(transform.position, t.transform.position);
+            if (dist < minDist) { minDist = dist; currentTarget = t.transform; }
+        }
     }
 }

@@ -1,110 +1,100 @@
-using UnityEngine;
+ï»¿using UnityEngine;
 using Unity.MLAgents;
 
-public class PlatformSpawner : MonoBehaviour
-{
-    [Header("Prefab das plataformas")]
+public class PlatformSpawner : MonoBehaviour {
+    [Header("Prefabs")]
     public GameObject platformPrefab;
     public GameObject checkpointPrefab;
     public GameObject goalPrefab;
 
-    [Header("Parâmetros base")]
-    public int numberOfPlatforms = 4;
+    [Header("ParÃ¢metros base")]
     public float platformHeight = 0.5f;
-    public float platformWidth = 3f;
+    public float platformWidth = 8f;
+    public float platformDepth = 8f;
 
-    private GameObject[] spawnedPlatforms;
     private GameObject[] spawnedCheckpoints;
 
     public CheckpointTrigger[] GetCheckpoints() =>
         System.Array.ConvertAll(spawnedCheckpoints,
             cp => cp.GetComponent<CheckpointTrigger>());
 
-    public void BuildCourse()
-    {
-        float gap = Academy.Instance.EnvironmentParameters
-            .GetWithDefault("platform_gap", 5f);
 
-        int numPlatforms = Mathf.RoundToInt(Academy.Instance.EnvironmentParameters
-            .GetWithDefault("num_platforms", 4f));
+    public void BuildCourse() {
+        /*int lesson = Mathf.RoundToInt(
+            Academy.Instance.EnvironmentParameters.GetWithDefault("lesson", 0f));*/ // usar isto para treinar
 
-        float heightVariation = Academy.Instance.EnvironmentParameters
-            .GetWithDefault("height_variation", 0f); // 0 = plano, 1 = com alturas
+        int lesson = 2;
 
-        Debug.Log("Gap: " + gap + " | Plataformas: " + numPlatforms + " | Altura: " + heightVariation);
+        float gap;
+        int numPlatforms;
+        float heightVariation;
 
-        ClearPlatforms();
-        numberOfPlatforms = numPlatforms;
+        switch (lesson) {
+            case 0: gap = 5f; numPlatforms = 3; heightVariation = 0f; break;
+            case 1: gap = 7f; numPlatforms = 4; heightVariation = 0f; break;
+            case 2: gap = 8f; numPlatforms = 5; heightVariation = 0.8f; break;
+            default: gap = 10f; numPlatforms = 6; heightVariation = 1.5f; break;
+        }
 
-        spawnedPlatforms = new GameObject[numberOfPlatforms];
-        spawnedCheckpoints = new GameObject[numberOfPlatforms];
+        ClearAll();
+        spawnedCheckpoints = new GameObject[numPlatforms];
 
-        float halfH = platformHeight / 2f;
-        SpawnPlatform(new Vector3(0, halfH, 0), new Vector3(3, platformHeight, 3));
+        SpawnPlatform(
+            new Vector3(0f, platformHeight / 2f, 0f),
+            new Vector3(5f, platformHeight, 5f)
+        );
 
         float currentZ = 0f;
-        float currentY = 0f; // altura atual acumulada
+        float currentY = 0f;
 
-        for (int i = 0; i < numberOfPlatforms; i++)
-        {
+        for (int i = 0; i < numPlatforms; i++) {
             currentZ += gap;
-            float x = Random.Range(-1f, 1f);
+            float x = Random.Range(-2f, 2f);
 
-            // Variação de altura — só ativa nos níveis difíceis
             if (heightVariation > 0f)
-            {
-                // Sobe ou desce aleatoriamente entre -1 e +1
-                float deltaY = Random.Range(-1f, 1f) * heightVariation;
-                currentY = Mathf.Clamp(currentY + deltaY, -1f, 3f); // limitar altura
-            }
+                currentY = Mathf.Clamp(
+                    currentY + Random.Range(-1f, 1f) * heightVariation,
+                    -1f, 4f);
 
-            float platY = halfH + currentY;
-            Vector3 platPos = new Vector3(x, platY, currentZ);
-            Vector3 platScale = new Vector3(platformWidth, platformHeight, platformWidth);
-            spawnedPlatforms[i] = SpawnPlatform(platPos, platScale);
+            float platY = platformHeight / 2f + currentY;
 
-            bool isGoal = (i == numberOfPlatforms - 1);
+            SpawnPlatform(
+                new Vector3(x, platY, currentZ),
+                new Vector3(platformWidth, platformHeight, platformDepth)
+            );
+
+            bool isGoal = (i == numPlatforms - 1);
             Vector3 cpPos = new Vector3(x, platY + platformHeight + 0.5f, currentZ);
             spawnedCheckpoints[i] = SpawnCheckpoint(cpPos, i, isGoal);
         }
     }
-    private GameObject SpawnPlatform(Vector3 position, Vector3 scale)
-    {
-        var p = Instantiate(platformPrefab, position, Quaternion.identity);
+
+    public Vector3 AgentSpawnPosition =>
+        transform.TransformPoint(new Vector3(0f, platformHeight + 0.5f, 0f));
+
+
+    private GameObject SpawnPlatform(Vector3 localPosition, Vector3 scale) {
+        Vector3 worldPos = transform.TransformPoint(localPosition);
+        var p = Instantiate(platformPrefab, worldPos, Quaternion.identity);
         p.transform.SetParent(transform);
         p.transform.localScale = scale;
         p.tag = "Platform";
         return p;
     }
 
-    private GameObject SpawnCheckpoint(Vector3 position, int index, bool isGoal)
-    {
+    private GameObject SpawnCheckpoint(Vector3 localPosition, int index, bool isGoal) {
+        Vector3 worldPos = transform.TransformPoint(localPosition);
         var prefab = isGoal ? goalPrefab : checkpointPrefab;
-
-        if (prefab == null)
-        {
-            Debug.LogError("Prefab null! isGoal: " + isGoal);
-            return null;
-        }
-
-        var cp = Instantiate(prefab, position, Quaternion.identity);
+        var cp = Instantiate(prefab, worldPos, Quaternion.identity);
         cp.transform.SetParent(transform);
-
         var trigger = cp.GetComponent<CheckpointTrigger>();
-        if (trigger == null)
-        {
-            Debug.LogError("CheckpointTrigger não encontrado no prefab: " + prefab.name);
-            return cp;
-        }
-
         trigger.checkpointIndex = index;
         trigger.isGoal = isGoal;
         cp.tag = isGoal ? "Goal" : "Checkpoint";
         return cp;
     }
 
-    private void ClearPlatforms()
-    {
+    private void ClearAll() {
         foreach (Transform child in transform)
             Destroy(child.gameObject);
     }
