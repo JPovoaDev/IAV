@@ -17,6 +17,8 @@ TagManager:
   - Goal
   - Saboteur
   - ParkourAgent
+  - SmartAgent
+  - AgentAnswer
   layers:
   - Default
   - TransparentFX
