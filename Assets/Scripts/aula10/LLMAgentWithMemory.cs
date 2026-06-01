@@ -10,7 +10,7 @@ using UnityEngine.Networking;
 public class LLMAgentWithMemory : MonoBehaviour
 {
     [SerializeField] private string apiUrl = "http://localhost:11434/api/chat";
-    [SerializeField] private string modelName = "llama3.2:1b";
+    [SerializeField] private string modelName = "qwen2.5:3b";
 
     [TextArea(4, 12)]
     [SerializeField] private string systemPrompt =

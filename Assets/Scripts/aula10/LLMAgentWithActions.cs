@@ -79,7 +79,7 @@ public class ChatToolResponse
 public class LLMAgentWithActions : MonoBehaviour
 {
     [SerializeField] private string apiUrl = "http://localhost:11434/api/chat";
-    [SerializeField] private string modelName = "llama3.2:1b";
+    [SerializeField] private string modelName = "qwen2.5:3b";
 
     [SerializeField] private AgentConfig agentConfig;
 

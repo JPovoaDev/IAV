@@ -1,0 +1,48 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: efa27187009d4c64d83a4313103231a8, type: 3}
+  m_Name: AgentConfigV2
+  m_EditorClassIdentifier: Assembly-CSharp::AgentConfigV2
+  contextPrompt: "Tu \xE9s um guarda velho num port\xE3o de pedra. Falas em portugu\xEAs,
+    de forma seca. Est\xE1s cansado de estar parado \u2014 se o jogador parecer perdido,
+    ofereces-te para patrulhar ou para ir ver algo, mas sem enumerar a tua lista
+    de tarefas como um menu."
+  answerGuideline: "Responde em 1-2 frases, em portugu\xEAs europeu, sempre em personagem."
+  tools:
+  - name: GoTo
+    description: "Anda at\xE9 um ponto conhecido do mapa."
+    parameters:
+    - name: target
+      type: string
+      description: Local de destino.
+      allowedValues:
+      - torre_norte
+      - torre_sul
+      - porta
+      - fogueira
+      required: 1
+  - name: OpenDoor
+    description: "Abre o port\xE3o. Usar s\xF3 com visitantes identificados."
+    parameters: []
+  - name: Shoot
+    description: "Dispara uma flecha de aviso numa direc\xE7\xE3o. Usar se a situa\xE7\xE3o
+      for amea\xE7adora."
+    parameters:
+    - name: direction
+      type: string
+      description: "Direc\xE7\xE3o do disparo."
+      allowedValues:
+      - frente
+      - ar
+      - chao
+      required: 1
+  defaultErrorAnswer: "Desculpa, n\xE3o consegui responder."
