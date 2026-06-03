@@ -22,7 +22,8 @@ using UnityEngine.Networking;
 public class LLMAgentWithParameterizedActions : MonoBehaviour
 {
     [SerializeField] private string apiUrl = "http://localhost:11434/api/chat";
-    [SerializeField] private string modelName = "qwen2.5:3b";
+    //[SerializeField] private string modelName = "qwen2.5:3b";
+    [SerializeField] private string modelName = "mistral:7b";
     //[SerializeField] private string modelName = "llama3.2:3b";
 
 
@@ -82,6 +83,7 @@ public class LLMAgentWithParameterizedActions : MonoBehaviour
         http.SetRequestHeader("Content-Type", "application/json");
 
         yield return http.SendWebRequest();
+        Debug.Log($"RAW RESPONSE: {http.downloadHandler.text}");
 
         if (http.result != UnityWebRequest.Result.Success)
         {
@@ -98,15 +100,29 @@ public class LLMAgentWithParameterizedActions : MonoBehaviour
         var message = resp["message"] as JObject;
         if (message == null) yield break;
 
-        // 1) Texto falado pelo NPC (T2 do feedback)
+        // 1) Texto falado pelo NPC
         string spoken = message["content"]?.ToString();
-        if (string.IsNullOrWhiteSpace(spoken)) spoken = "...";
-        if (agentReplyText != null) agentReplyText.text = spoken;
-        history.Add(new ChatMessage { role = "assistant", content = spoken });
-        TrimHistory();
+        var toolCalls = message["tool_calls"] as JArray;
+
+        // Se há tool call mas sem texto, não mostrar "..."
+        if (string.IsNullOrWhiteSpace(spoken))
+        {
+            spoken = (toolCalls != null && toolCalls.Count > 0) ? null : "...";
+        }
+
+        if (spoken != null)
+        {
+            if (agentReplyText != null) agentReplyText.text = spoken;
+            history.Add(new ChatMessage { role = "assistant", content = spoken });
+            TrimHistory();
+        }
 
         // 2) Acções a executar (T3 do feedback fica nos handlers)
-        var toolCalls = message["tool_calls"] as JArray;
+        // Fallback: se não há tool_calls, tenta parsear texto
+        if ((toolCalls == null || toolCalls.Count == 0) && !string.IsNullOrWhiteSpace(spoken))
+        {
+            TryParseTextAsToolCall(spoken);
+        }
         if (toolCalls == null) yield break;
 
         foreach (var call in toolCalls)
@@ -176,7 +192,32 @@ public class LLMAgentWithParameterizedActions : MonoBehaviour
         while (history.Count > windowSize)
             history.RemoveAt(0);
     }
+    private void TryParseTextAsToolCall(string text)
+    {
+        string t = text.ToLower();
+
+        // Detect Investigate + zona
+        string zone = null;
+        if (t.Contains("corredor")) zone = "corredor";
+        else if (t.Contains("arquivo")) zone = "arquivo";
+        else if (t.Contains("laboratorio") || t.Contains("laboratório")) zone = "laboratorio";
+
+        if (zone != null && handlers.TryGetValue("Investigate", out var handler))
+        {
+            var args = new JObject { ["zone"] = zone };
+            Debug.Log($"[Fallback] Tool call: Investigate zone={zone}");
+            handler(args);
+            return;
+        }
+
+        // Outros fallbacks se necessário
+        if (t.Contains("alarm") && handlers.TryGetValue("ActivateAlarm", out var alarm))
+            alarm(new JObject());
+        if (t.Contains("lockdown") && handlers.TryGetValue("LockDown", out var ld))
+            ld(new JObject());
+    }
 }
+
 
 // Reutiliza o tipo ChatMessage que já vinha da aula 10 (role + content).
 // Se a tua versão de aula 10 não tornou o tipo público no namespace global,

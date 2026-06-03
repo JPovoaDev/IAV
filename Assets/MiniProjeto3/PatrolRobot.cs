@@ -2,9 +2,10 @@ using UnityEngine;
 using UnityEngine.AI;
 
 [RequireComponent(typeof(NavMeshAgent))]
-public class PatrolRobot : MonoBehaviour {
+public class PatrolRobot : MonoBehaviour
+{
 
-    [SerializeField] private Transform[] waypoints;
+    [SerializeField] private Transform[] waypoints;       // WP1-WP4 wander
     [SerializeField] private float waitAtWaypoint = 1.5f;
 
     private NavMeshAgent nav;
@@ -13,21 +14,26 @@ public class PatrolRobot : MonoBehaviour {
     private float waitTimer = 0f;
     private bool waiting = false;
 
-    private void Awake() {
+    private void Awake()
+    {
         nav = GetComponent<NavMeshAgent>();
     }
 
-    private void Start() {
+    private void Start()
+    {
         if (waypoints.Length > 0)
             nav.SetDestination(waypoints[0].position);
     }
 
-    private void Update() {
+    private void Update()
+    {
         if (!patrolling || waypoints.Length == 0) return;
 
-        if (waiting) {
+        if (waiting)
+        {
             waitTimer -= Time.deltaTime;
-            if (waitTimer <= 0f) {
+            if (waitTimer <= 0f)
+            {
                 waiting = false;
                 currentWP = (currentWP + 1) % waypoints.Length;
                 nav.SetDestination(waypoints[currentWP].position);
@@ -35,20 +41,34 @@ public class PatrolRobot : MonoBehaviour {
             return;
         }
 
-        if (!nav.pathPending && nav.remainingDistance <= nav.stoppingDistance) {
+        if (!nav.pathPending && nav.remainingDistance <= nav.stoppingDistance)
+        {
             waiting = true;
             waitTimer = waitAtWaypoint;
         }
     }
 
-    public void StopPatrol() {
+    public void StopPatrol()
+    {
         patrolling = false;
         nav.isStopped = true;
     }
 
-    public void ResumePatrol() {
+    public void ResumePatrol()
+    {
         patrolling = true;
         nav.isStopped = false;
-        nav.SetDestination(waypoints[currentWP].position);
+        if (waypoints.Length > 0)
+            nav.SetDestination(waypoints[currentWP].position);
     }
+
+    // Navega para um ponto arbitrário sem interferir com o wander
+    // Usado pelo ARIAInvestigator para mandar o robot para zonas e base
+    public void GoTo(Vector3 position)
+    {
+        nav.isStopped = false;
+        nav.SetDestination(position);
+    }
+
+    public NavMeshAgent Agent => nav;
 }

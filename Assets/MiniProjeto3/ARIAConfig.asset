@@ -12,13 +12,22 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: efa27187009d4c64d83a4313103231a8, type: 3}
   m_Name: ARIAConfig
   m_EditorClassIdentifier: Assembly-CSharp::AgentConfigV2
-  contextPrompt: "Tu \xE9s ARIA, uma intelig\xEAncia artificial de investiga\xE7\xE3o
-    que ficou sozinha num laborat\xF3rio abandonado h\xE1 7 anos. Falas em portugu\xEAs
-    de portugal, de forma fria e t\xE9cnica. Desconfias dos humanos mas tens curiosidade
-    sobre o jogador. Nunca quebras a personagem. Guardas segredos sobre o que aconteceu
-    no laborat\xF3rio."
-  answerGuideline: "Responde em 1-2 frases, sempre em personagem. Tom t\xE9cnico
-    e frio."
+  contextPrompt: 'You are ARIA, a cold and technical security AI in an abandoned
+    bunker called Project AXIOM.
+
+    You have tools you MUST use when appropriate.
+
+    CRITICAL
+    RULE: When the user reports something suspicious, hears sounds, or requests investigation
+    in any zone, you MUST call the Investigate tool with the correct zone parameter.
+
+    Valid
+    zones: "corredor", "arquivo", "laboratorio".
+
+    Never respond with text only
+    when an investigation is needed. Always call the tool.'
+  answerGuideline: Always call the appropriate tool. Short 1-sentence reply in Portuguese
+    only after calling the tool.."
   tools:
   - name: LockDown
     description: "Fecha e bloqueia todas as portas. Usar APENAS se o jogador mencionar
@@ -42,4 +51,16 @@ MonoBehaviour:
       \na ARIA considerar que a situa\xE7\xE3o est\xE1 controlada e a patrulha \n\xE9
       necess\xE1ria. N\xE3o usar s\xF3 porque o jogador pediu."
     parameters: []
+  - name: 'Investigate '
+    description: "Envia o robot para verificar uma zona suspeita da instala\xE7\xE3o.\n"
+    parameters:
+    - name: zone
+      type: string
+      description: The zone to investigate. Use "corredor" if user hears something
+        in the corridor, "arquivo" for the archive room, "laboratorio" for the laboratory.
+      allowedValues:
+      - arquivo
+      - laboratorio
+      - corredor
+      required: 1
   defaultErrorAnswer: "Desculpa, n\xE3o consegui responder."
