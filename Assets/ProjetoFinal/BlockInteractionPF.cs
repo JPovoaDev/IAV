@@ -1,18 +1,22 @@
 using UnityEngine;
+using System.Collections.Generic;
 
-public class BlockInteraction : MonoBehaviour {
+public class BlockInteractionPF : MonoBehaviour {
 
-    public WorldManager worldManager;
+    public WorldManagerPF worldManager;
     public float maxDistance = 6f;// distancia que o raycast alcanca, quanto maior conseguimos alcancar os blocos mais longe
-    public Transform highlightCube;//   o cubo wireframe que aparece a volta do cubo que estamos a apontar
+    public Transform highlightCube;// é o cubo wireframe que aparece a volta do cubo que estamos a apontar
 
-    private Block.BlockType[] palette = {// lista de blocos que podemos colocar 
-        Block.BlockType.DIRT,
-        Block.BlockType.STONE,
-        Block.BlockType.GRASS
+    private Dictionary<Vector3Int, int> blockDamage = new Dictionary<Vector3Int, int>();
+    private int hitsToBreak = 3;
+
+    private BlockPF.BlockType[] palette = {// lista de blocos que podemos colocar 
+        BlockPF.BlockType.DIRT,
+        BlockPF.BlockType.STONE,
+        BlockPF.BlockType.GRASS
     };
     private int currentIndex = 0;// o indice indica qual bloco esta selecionado, ou seja, no indice 0 colocamos o bloco DIRT
-    private Block.BlockType placeType => palette[currentIndex];// playce typ e  uma propriedade que devolve sempre o bloco com o index que vamos colocar
+    private BlockPF.BlockType placeType => palette[currentIndex];// playce typ eé uma propriedade que devolve sempre o bloco com o index que vamos colocar
 
     void Update() {
         HandleHighlight();// atulaiza o bloco que fica highlight
@@ -24,7 +28,7 @@ public class BlockInteraction : MonoBehaviour {
     void HandleHighlight() {
         Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);// criamos um raycast para onde a camara esta a olhar 
         if (Physics.Raycast(ray, out RaycastHit hit, maxDistance)) {
-            Vector3 center = hit.point - hit.normal * 0.5f;//hit.point   o ponto exato que o raycast colidiu contra um box colider. O hit.Normal   o vetor que aponta para cima(fora do bloco)
+            Vector3 center = hit.point - hit.normal * 0.5f;//hit.point é o ponto exato que o raycast colidiu contra um box colider. O hit.Normal é o vetor que aponta para cima(fora do bloco)
             // do ponto que apanhou, e o 0.5. ent fazemos -normal para apontar para dentro do bloco e mutliplicamos por 0.5 para ficar dentro do bloco. sem isto se so ussassemos o hit.point e 
             //depois o round poderia arredondar para o bloco errado.o - hit.normal * 0.5f garante que fica no bloco certo.
             highlightCube.position = new Vector3(
@@ -43,12 +47,46 @@ public class BlockInteraction : MonoBehaviour {
         if (scroll > 0f) currentIndex = (currentIndex + 1) % palette.Length;
         if (scroll < 0f) currentIndex = (currentIndex - 1 + palette.Length) % palette.Length;
     }
-    
+
     void BreakBlock() {
-        //mandamos um raycast e se ele acertar em algum bloco modifica o bloco que esta no ray cast para o bloco AIR
         Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
-            ModifyBlock(hit.point - hit.normal * 0.5f, Block.BlockType.AIR);
+        if (!Physics.Raycast(ray, out RaycastHit hit, maxDistance)) return;
+
+        Vector3 center = hit.point - hit.normal * 0.5f;
+        int bx = Mathf.RoundToInt(center.x);
+        int by = Mathf.RoundToInt(center.y);
+        int bz = Mathf.RoundToInt(center.z);
+        Vector3Int blockKey = new Vector3Int(bx, by, bz);
+
+        if (!blockDamage.ContainsKey(blockKey)) blockDamage[blockKey] = 0;
+        blockDamage[blockKey]++;
+        int hits = blockDamage[blockKey];
+
+        if (hits >= hitsToBreak) {
+            BlockPF.BlockType destroyedType = GetBlockType(bx, by, bz);
+            ModifyBlock(center, BlockPF.BlockType.AIR);
+            blockDamage.Remove(blockKey);
+
+            if (destroyedType != BlockPF.BlockType.AIR && destroyedType != BlockPF.BlockType.WATER)
+                InventoryManagerPF.Instance.AddBlock(destroyedType);
+        } else {
+            Debug.Log($"Bloco danificado: {hits}/{hitsToBreak}");
+        }
+    }
+
+    BlockPF.BlockType GetBlockType(int bx, int by, int bz) {
+        int cs = ChunkPF.chunkSize;
+        Vector2Int chunkCoord = new Vector2Int(
+            Mathf.FloorToInt((float)bx / cs),
+            Mathf.FloorToInt((float)bz / cs));
+        ChunkPF chunk = worldManager.GetChunk(chunkCoord);
+        if (chunk == null) return BlockPF.BlockType.AIR;
+        int lx = bx - chunkCoord.x * cs;
+        int ly = by;
+        int lz = bz - chunkCoord.y * cs;
+        if (lx < 0 || lx >= cs || ly < 0 || ly >= cs || lz < 0 || lz >= cs)
+            return BlockPF.BlockType.AIR;
+        return chunk.chunkData[lx, ly, lz].type;
     }
 
     void PlaceBlock() {
@@ -58,8 +96,8 @@ public class BlockInteraction : MonoBehaviour {
             ModifyBlock(hit.point + hit.normal * 0.5f, placeType);
     }
 
-    void ModifyBlock(Vector3 worldPos, Block.BlockType type) {
-        int cs = Chunk.chunkSize;
+    void ModifyBlock(Vector3 worldPos, BlockPF.BlockType type) {
+        int cs = ChunkPF.chunkSize;
 
         int bx = Mathf.RoundToInt(worldPos.x);// arredondamos para cada bloco ocupar exatamente 1 unidade
         int by = Mathf.RoundToInt(worldPos.y);
@@ -71,12 +109,12 @@ public class BlockInteraction : MonoBehaviour {
             Mathf.FloorToInt((float)bx / cs),
             Mathf.FloorToInt((float)bz / cs));
 
-        Chunk chunk = worldManager.GetChunk(chunkCoord);//vamos pedir o chunk ao manager
+        ChunkPF chunk = worldManager.GetChunk(chunkCoord);//vamos pedir o chunk ao manager
         if (chunk == null) return;
 
         //transforma em coordenadas do mundo 
         int localX = bx - chunkCoord.x * cs;
-        int localY = by;//o y n   preciso pois os chunks n tem offsets verticais 
+        int localY = by;//o y n é preciso pois os chunks n tem offsets verticais 
         int localZ = bz - chunkCoord.y * cs;
 
         //so para verificar se a conversao ficou dentro dos limites 
@@ -84,9 +122,9 @@ public class BlockInteraction : MonoBehaviour {
             localY < 0 || localY >= cs ||
             localZ < 0 || localZ >= cs) return;
 
-        Block block = chunk.chunkData[localX, localY, localZ];
+        BlockPF block = chunk.chunkData[localX, localY, localZ];
         block.type = type;
-        block.isSolid = (type != Block.BlockType.AIR && type != Block.BlockType.WATER);// atribui ao bloco novo se   solido ou nao, ou seja,   solido se n for nem air ou agua
+        block.isSolid = (type != BlockPF.BlockType.AIR && type != BlockPF.BlockType.WATER);// atribui ao bloco novo se é solido ou nao, ou seja, é solido se n for nem air ou agua
 
         chunk.DrawChunk();//constroi o chunk
 
@@ -96,13 +134,13 @@ public class BlockInteraction : MonoBehaviour {
         if (localZ == 0) RedrawNeighbour(chunkCoord + Vector2Int.down);
         if (localZ == cs - 1) RedrawNeighbour(chunkCoord + Vector2Int.up);
 
-        // cada chunk e responsavel por desenhar as suas proprioas fases mas para saber se deve ou nao de desenhar uma face pergunta ao bloco se o bloco do lado ou de baixo   solido.
+        // cada chunk e responsavel por desenhar as suas proprioas fases mas para saber se deve ou nao de desenhar uma face pergunta ao bloco se o bloco do lado ou de baixo é solido.
         //Senao tem que desenhar, por isso e que precisamos de desenhar o vizinho ou pedir para desenhar, para o sistema saber se tem ou n que desenhar todas as faces do cubo.
     }
 
     //desenha o vizinho do chunk
-    void    RedrawNeighbour(Vector2Int coord) {
-        Chunk c = worldManager.GetChunk(coord);
+    void RedrawNeighbour(Vector2Int coord) {
+        ChunkPF c = worldManager.GetChunk(coord);
         if (c != null) c.DrawChunk();
     }
 }

@@ -1,8 +1,8 @@
 using System.Collections.Generic;
 using UnityEngine;
-public class Block {
+public class BlockPF {
 
-    public enum BlockType { GRASS, DIRT, STONE, AIR, WATER, HERB, SAND,SNOW, ICE, CACTI}
+    public enum BlockType { GRASS, DIRT, STONE, AIR, WATER, HERB, SAND, SNOW, ICE, CACTI, WOOD, LEAVES, OBSIDIAN }
     public BlockType type;
 
 
@@ -18,7 +18,7 @@ public class Block {
     static readonly Vector3 v5 = new Vector3(0.5f, 0.5f, 0.5f);
     static readonly Vector3 v6 = new Vector3(0.5f, 0.5f, -0.5f);
     static readonly Vector3 v7 = new Vector3(-0.5f, 0.5f, -0.5f);
-    public Block(BlockType type, Vector3 position) {
+    public BlockPF(BlockType type, Vector3 position) {
         this.type = type;
         this.position = position;
         isSolid = (type != BlockType.AIR && type != BlockType.WATER && type != BlockType.HERB);
@@ -26,10 +26,10 @@ public class Block {
     // TODO: implementar
     public void AddFaceToMeshData(CubeFace face,
         List<Vector3> vertices, List<int> triangles, List<Vector2> uvs) {
-        // 1. Guardar o  ndice actual   serve de offset para os tri ngulos deste bloco
+        // 1. Guardar o índice actual — serve de offset para os triângulos deste bloco
         int vertexIndex = vertices.Count;
 
-        // 2. Obter os 4 v rtices da face (tabela do gui o)
+        // 2. Obter os 4 vértices da face (tabela do guião)
         Vector3[] faceVertices;
         switch (face) {
             case CubeFace.Front: faceVertices = new[] { v4, v5, v1, v0 }; break;
@@ -41,11 +41,11 @@ public class Block {
             default: return;
         }
 
-        // 3. Somar a posi  o do bloco a cada v rtice e adicionar   lista
+        // 3. Somar a posição do bloco a cada vértice e adicionar à lista
         foreach (Vector3 v in faceVertices)
             vertices.Add(v + position);
 
-        // 4. UVs   textura inteira em cada face
+        // 4. UVs — textura inteira em cada face
         /*uvs.Add(new Vector2(0, 1)); // superior-esquerdo
         uvs.Add(new Vector2(1, 1)); // superior-direito
         uvs.Add(new Vector2(1, 0)); // inferior-direito
@@ -56,7 +56,7 @@ public class Block {
         uvs.Add(faceUVs[2]);
         uvs.Add(faceUVs[3]);
 
-        // 5. Tri ngulos COM OFFSET   os  ndices referenciam os v rtices certos na lista global
+        // 5. Triângulos COM OFFSET — os índices referenciam os vértices certos na lista global
         triangles.Add(vertexIndex + 3);
         triangles.Add(vertexIndex + 1);
         triangles.Add(vertexIndex + 0);
@@ -96,7 +96,16 @@ public class Block {
         else if (type == BlockType.CACTI)
             lbc = new Vector2(6f, 11f) / 16f;
 
-        else 
+        else if (type == BlockType.WOOD)
+            lbc = new Vector2(4f, 16f) / 16;
+
+        else if (type == BlockType.LEAVES)
+            lbc = new Vector2(4f, 12f) / 16;
+
+        else if (type == BlockType.OBSIDIAN)
+            lbc = new Vector2(5f, 13f) / 16;
+
+        else
             lbc = new Vector2(0f, 14f) / 16;
 
         Vector2 uv00 = lbc; // inferior-esquerdo
