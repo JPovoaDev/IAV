@@ -38,6 +38,16 @@ public class ChunkPF : MonoBehaviour {
     private float wormDirectionScale = 0.45f;       // Velocidade com que a direcção muda. Maior = mais curvas.
     private float wormSpawnChance = 0.36f;          // Probabilidade de spawnar um túnel neste chunk. 0 = nunca, 1 = sempre.
 
+
+
+
+    [Header("Targets")]
+    public GameObject targetPrefab;
+    /*
+     * Como os blocos em si nao sao gameobjetcts fazer com que a obsidiana seja um target tornou se dificil
+     * entao a solucoa é em cada obsidiana spawnada, metemos um gameobjetc como marcado
+     * */
+
     void Start() {
         //InitializeChunk();
         //DrawChunk();
@@ -299,7 +309,7 @@ public class ChunkPF : MonoBehaviour {
             }
         }
 
-        // bloco central da arena (obsidiana = marca o NPC)
+        // bloco central da arena , e meter o gameobject do target aqui, para o agente saber onde ir.
         int npcX = cx + 2, npcZ = cz + 2;
         SetIfInBounds(npcX, cy, npcZ, BlockPF.BlockType.OBSIDIAN);
 
@@ -307,7 +317,19 @@ public class ChunkPF : MonoBehaviour {
             worldOffset.x * chunkSize + npcX,
             cy,
             worldOffset.y * chunkSize + npcZ);
+
         ArenaRegistryPF.Instance?.RegisterArena(worldPos);
+
+        SpawnTargetMarker(worldPos);
+    }
+
+    void SpawnTargetMarker(Vector3 obsidianWorldPos)
+    {
+        if (targetPrefab == null) return;
+
+        Vector3 spawnPos = obsidianWorldPos + Vector3.up; // em cima do bloco, não dentro dele
+                                                          // parent = transform (o próprio chunk) -> importante! ver nota abaixo
+        Instantiate(targetPrefab, spawnPos, Quaternion.identity, transform);
     }
 
     void SetIfInBounds(int x, int y, int z, BlockPF.BlockType type) {

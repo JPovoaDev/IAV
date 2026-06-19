@@ -97,10 +97,10 @@ public class BlockPF {
             lbc = new Vector2(6f, 11f) / 16f;
 
         else if (type == BlockType.WOOD)
-            lbc = new Vector2(4f, 16f) / 16;
+            lbc = new Vector2(4f, 14f) / 16;
 
         else if (type == BlockType.LEAVES)
-            lbc = new Vector2(4f, 12f) / 16;
+            lbc = new Vector2(2f, 6f) / 16;
 
         else if (type == BlockType.OBSIDIAN)
             lbc = new Vector2(5f, 13f) / 16;

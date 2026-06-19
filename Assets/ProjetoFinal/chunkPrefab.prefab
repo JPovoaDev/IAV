@@ -102,3 +102,4 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 20977585ec47e644d831f601df874d8c, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::ChunkPF
+  targetPrefab: {fileID: 2394439685781948907, guid: e049fb99bf7272d419500fa964557b3d, type: 3}
