@@ -10,13 +10,20 @@ public class BlockInteractionPF : MonoBehaviour {
     private Dictionary<Vector3Int, int> blockDamage = new Dictionary<Vector3Int, int>();
     private int hitsToBreak = 3;
 
-    private BlockPF.BlockType[] palette = {// lista de blocos que podemos colocar 
+    public static bool obsidianUnlocked = false;
+
+    private BlockPF.BlockType[] palette = { // lista de blocos que podemos colocar 
         BlockPF.BlockType.DIRT,
         BlockPF.BlockType.STONE,
-        BlockPF.BlockType.GRASS
+        BlockPF.BlockType.GRASS,
+        BlockPF.BlockType.SAND,
+        BlockPF.BlockType.SNOW,
+        BlockPF.BlockType.WOOD,
+        BlockPF.BlockType.LEAVES,
+        BlockPF.BlockType.OBSIDIAN
     };
-    private int currentIndex = 0;// o indice indica qual bloco esta selecionado, ou seja, no indice 0 colocamos o bloco DIRT
-    private BlockPF.BlockType placeType => palette[currentIndex];// playce typ eé uma propriedade que devolve sempre o bloco com o index que vamos colocar
+    private int currentIndex = 0; // o indice indica qual bloco esta selecionado, ou seja, no indice 0 colocamos o bloco DIRT
+    private BlockPF.BlockType placeType => palette[currentIndex]; // playce typ eé uma propriedade que devolve sempre o bloco com o index que vamos colocar
 
     void Update() {
         HandleHighlight();// atulaiza o bloco que fica highlight
@@ -41,12 +48,23 @@ public class BlockInteractionPF : MonoBehaviour {
         }
     }
 
-    void HandleScroll() {//aqui simplesmnete semrpe que nos damos scrool no rato aumenta um no indice se for para cima e se for para baixo diminui o % faz com que o indice fique entre o 0 
-        //e a lenght do array
-        float scroll = Input.GetAxis("Mouse ScrollWheel");
-        if (scroll > 0f) currentIndex = (currentIndex + 1) % palette.Length;
-        if (scroll < 0f) currentIndex = (currentIndex - 1 + palette.Length) % palette.Length;
+
+    void Start() {
+        InventoryManagerPF.Instance.SetHighlight(placeType);
     }
+
+    void HandleScroll() {
+        float scroll = Input.GetAxis("Mouse ScrollWheel");
+        if (scroll == 0f) return;
+        int dir = scroll > 0f ? 1 : -1;
+        int start = currentIndex;
+        do {
+            currentIndex = (currentIndex + dir + palette.Length) % palette.Length;
+        } while (InventoryManagerPF.Instance.Count(palette[currentIndex]) <= 0
+                 && currentIndex != start);
+        InventoryManagerPF.Instance.SetHighlight(placeType);
+    }
+
 
     void BreakBlock() {
         Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
@@ -56,44 +74,47 @@ public class BlockInteractionPF : MonoBehaviour {
         int bx = Mathf.RoundToInt(center.x);
         int by = Mathf.RoundToInt(center.y);
         int bz = Mathf.RoundToInt(center.z);
-        Vector3Int blockKey = new Vector3Int(bx, by, bz);
 
+        BlockPF.BlockType GetBlockType(int bx, int by, int bz) {
+            int cs = ChunkPF.chunkSize;
+            Vector2Int chunkCoord = new Vector2Int(
+                Mathf.FloorToInt((float)bx / cs),
+                Mathf.FloorToInt((float)bz / cs));
+            ChunkPF chunk = worldManager.GetChunk(chunkCoord);
+            if (chunk == null) return BlockPF.BlockType.AIR;
+            int lx = bx - chunkCoord.x * cs;
+            int ly = by;
+            int lz = bz - chunkCoord.y * cs;
+            if (lx < 0 || lx >= cs || ly < 0 || ly >= cs || lz < 0 || lz >= cs)
+                return BlockPF.BlockType.AIR;
+            return chunk.chunkData[lx, ly, lz].type;
+        }
+
+        BlockPF.BlockType hitType = GetBlockType(bx, by, bz);
+        if (hitType == BlockPF.BlockType.AIR || hitType == BlockPF.BlockType.WATER) return;
+        if (!obsidianUnlocked && hitType == BlockPF.BlockType.OBSIDIAN) return;
+
+        Vector3Int blockKey = new Vector3Int(bx, by, bz);
         if (!blockDamage.ContainsKey(blockKey)) blockDamage[blockKey] = 0;
         blockDamage[blockKey]++;
-        int hits = blockDamage[blockKey];
 
-        if (hits >= hitsToBreak) {
-            BlockPF.BlockType destroyedType = GetBlockType(bx, by, bz);
-            ModifyBlock(center, BlockPF.BlockType.AIR);
-            blockDamage.Remove(blockKey);
+        if (blockDamage[blockKey] < hitsToBreak) return;
 
-            if (destroyedType != BlockPF.BlockType.AIR && destroyedType != BlockPF.BlockType.WATER)
-                InventoryManagerPF.Instance.AddBlock(destroyedType);
-        } else {
-            Debug.Log($"Bloco danificado: {hits}/{hitsToBreak}");
-        }
-    }
-
-    BlockPF.BlockType GetBlockType(int bx, int by, int bz) {
-        int cs = ChunkPF.chunkSize;
-        Vector2Int chunkCoord = new Vector2Int(
-            Mathf.FloorToInt((float)bx / cs),
-            Mathf.FloorToInt((float)bz / cs));
-        ChunkPF chunk = worldManager.GetChunk(chunkCoord);
-        if (chunk == null) return BlockPF.BlockType.AIR;
-        int lx = bx - chunkCoord.x * cs;
-        int ly = by;
-        int lz = bz - chunkCoord.y * cs;
-        if (lx < 0 || lx >= cs || ly < 0 || ly >= cs || lz < 0 || lz >= cs)
-            return BlockPF.BlockType.AIR;
-        return chunk.chunkData[lx, ly, lz].type;
+        blockDamage.Remove(blockKey);
+        InventoryManagerPF.Instance.AddBlock(hitType);
+        ModifyBlock(new Vector3(bx, by, bz), BlockPF.BlockType.AIR);
     }
 
     void PlaceBlock() {
+        if (InventoryManagerPF.Instance.Count(placeType) <= 0) 
+            return;
+
         //mandamos um raycast e modificamos para o tipo de bloco que esta com o current inidce
         Ray ray = new Ray(Camera.main.transform.position, Camera.main.transform.forward);
-        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance))
+        if (Physics.Raycast(ray, out RaycastHit hit, maxDistance)) {
+            InventoryManagerPF.Instance.RemoveBlock(placeType);
             ModifyBlock(hit.point + hit.normal * 0.5f, placeType);
+        }
     }
 
     void ModifyBlock(Vector3 worldPos, BlockPF.BlockType type) {

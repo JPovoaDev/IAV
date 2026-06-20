@@ -83,8 +83,6 @@ public class PlayerControllerPF : MonoBehaviour {
     }
 
     bool IsInWater() {
-        if (worldManager == null) return false;
-
         // pés do jogador (centro - metade da altura)
         Vector3 feetPos = transform.position + Vector3.up * 0.5f;
 

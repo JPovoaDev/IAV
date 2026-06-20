@@ -4,15 +4,27 @@ using UnityEngine;
 public class ArenaRegistryPF : MonoBehaviour {
     public static ArenaRegistryPF Instance;
     private List<Vector3> arenas = new List<Vector3>();
+    public GameObject capsulePrefab;
+    public Transform player;
 
     void Awake() {
         if (Instance == null) Instance = this;
         else Destroy(gameObject);
     }
 
-    public void RegisterArena(Vector3 position) {
-        if (!arenas.Contains(position))
+    public void RegisterArena(Vector3 position, Vector3 capsuleSpawnPos, GameObject chunkObject) {
+        if (!arenas.Contains(position)) {
             arenas.Add(position);
+            SpawnCapsule(capsuleSpawnPos, chunkObject);
+        }
+    }
+
+    void SpawnCapsule(Vector3 spawnPos, GameObject chunkObject) {
+        GameObject capsule = Instantiate(capsulePrefab, spawnPos, Quaternion.identity);
+
+        GamblerNPCPF gambler = capsule.GetComponent<GamblerNPCPF>();
+        gambler.playerTransform = player;
+        gambler.voxelArenaObject = chunkObject;
     }
 
     public Vector3? GetNearestArena(Vector3 from) {

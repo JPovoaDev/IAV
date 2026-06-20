@@ -6,6 +6,7 @@ public class InventoryManagerPF : MonoBehaviour {
     public static InventoryManagerPF Instance;
 
     private Dictionary<BlockPF.BlockType, int> items = new Dictionary<BlockPF.BlockType, int>();
+    private BlockPF.BlockType? highlightedType = null;
 
     public TMP_Text inventoryText;
 
@@ -31,11 +32,20 @@ public class InventoryManagerPF : MonoBehaviour {
         return items.ContainsKey(type) ? items[type] : 0;
     }
 
+    public void SetHighlight(BlockPF.BlockType type) {
+        highlightedType = type;
+        UpdateUI();
+    }
+
     void UpdateUI() {
         string text = "";
-        foreach (var entry in items)
-            if (entry.Value > 0)
+        foreach (var entry in items) {
+            if (entry.Value <= 0) continue;
+            if (highlightedType.HasValue && entry.Key == highlightedType.Value)
+                text += $"<color=red>{entry.Key}: {entry.Value}</color>\n";
+            else
                 text += $"{entry.Key}: {entry.Value}\n";
+        }
         if (inventoryText != null) inventoryText.text = text;
     }
 }

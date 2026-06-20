@@ -9,6 +9,7 @@ public class BlockPF {
     public enum CubeFace { Front, Back, Top, Bottom, Left, Right }
     public Vector3 position;
     public bool isSolid;
+
     // Os 8 vertices (mesmos da aula01)
     static readonly Vector3 v0 = new Vector3(-0.5f, -0.5f, 0.5f);
     static readonly Vector3 v1 = new Vector3(0.5f, -0.5f, 0.5f);
@@ -18,12 +19,13 @@ public class BlockPF {
     static readonly Vector3 v5 = new Vector3(0.5f, 0.5f, 0.5f);
     static readonly Vector3 v6 = new Vector3(0.5f, 0.5f, -0.5f);
     static readonly Vector3 v7 = new Vector3(-0.5f, 0.5f, -0.5f);
+
     public BlockPF(BlockType type, Vector3 position) {
         this.type = type;
         this.position = position;
-        isSolid = (type != BlockType.AIR && type != BlockType.WATER && type != BlockType.HERB);
+        isSolid = (type != BlockType.AIR && type != BlockType.WATER && type != BlockType.HERB && type != BlockType.LEAVES);
     }
-    // TODO: implementar
+
     public void AddFaceToMeshData(CubeFace face,
         List<Vector3> vertices, List<int> triangles, List<Vector2> uvs) {
         // 1. Guardar o índice actual — serve de offset para os triângulos deste bloco

@@ -233,7 +233,7 @@ public class ChunkPF : MonoBehaviour {
         for (int x = 2; x < chunkSize - 2; x++)
             for (int z = 2; z < chunkSize - 2; z++) {
                 if (biome[x, z] != 0) continue;
-                if (Random.value > 0.05f) continue;
+                if (Random.value > 0.015f) continue;
 
                 int surfY = surfaceHeight[x, z];
                 if (surfY <= 0) continue;
@@ -251,8 +251,7 @@ public class ChunkPF : MonoBehaviour {
         for (int i = 1; i <= trunkHeight; i++) {
             int y = baseY + i;
             if (y < chunkSize)
-                chunkData[x, y, z] = new BlockPF(BlockPF.BlockType.WOOD,
-                    new Vector3(worldOffset.x * chunkSize + x, y, worldOffset.y * chunkSize + z));
+                chunkData[x, y, z] = new BlockPF(BlockPF.BlockType.WOOD, new Vector3(x, y, z));
         }
 
         int treeTop = baseY + trunkHeight;
@@ -262,14 +261,13 @@ public class ChunkPF : MonoBehaviour {
                     int lx = x + dx, ly = treeTop + dy, lz = z + dz;
                     if (lx < 0 || lx >= chunkSize || ly < 0 || ly >= chunkSize || lz < 0 || lz >= chunkSize) continue;
                     if (chunkData[lx, ly, lz].type != BlockPF.BlockType.AIR) continue;
-                    chunkData[lx, ly, lz] = new BlockPF(BlockPF.BlockType.LEAVES,
-                        new Vector3(worldOffset.x * chunkSize + lx, ly, worldOffset.y * chunkSize + lz));
+                    chunkData[lx, ly, lz] = new BlockPF(BlockPF.BlockType.LEAVES, new Vector3(lx, ly, lz));
                 }
     }
 
     void TryPlaceArena() {
         System.Random rng = new System.Random(worldOffset.x * 1000 + worldOffset.y);
-        if (rng.NextDouble() > 0.15) return;
+        if (rng.NextDouble() > 0.02) return;
 
         for (int x = 2; x < chunkSize - 3; x++)
             for (int z = 2; z < chunkSize - 3; z++)
@@ -318,18 +316,41 @@ public class ChunkPF : MonoBehaviour {
             cy,
             worldOffset.y * chunkSize + npcZ);
 
-        ArenaRegistryPF.Instance?.RegisterArena(worldPos);
+        int spawnLocalX = Mathf.Clamp(cx - 2, 0, chunkSize - 1);
+        int spawnLocalZ = Mathf.Clamp(cz - 2, 0, chunkSize - 1);
+        int spawnSurfY = 0;
+        for (int sy = chunkSize - 1; sy >= 0; sy--) {
+            if (chunkData[spawnLocalX, sy, spawnLocalZ].isSolid) {
+                spawnSurfY = sy;
+                break;
+            }
+        }
+        Vector3 capsuleSpawnPos = new Vector3(
+            worldOffset.x * chunkSize + spawnLocalX,
+            spawnSurfY + 1f,
+            worldOffset.y * chunkSize + spawnLocalZ);
+
+        ArenaRegistryPF.Instance.RegisterArena(worldPos, capsuleSpawnPos, gameObject);
 
         SpawnTargetMarker(worldPos);
     }
 
-    void SpawnTargetMarker(Vector3 obsidianWorldPos)
-    {
-        if (targetPrefab == null) return;
-
-        Vector3 spawnPos = obsidianWorldPos + Vector3.up; // em cima do bloco, não dentro dele
-                                                          // parent = transform (o próprio chunk) -> importante! ver nota abaixo
+    void SpawnTargetMarker(Vector3 obsidianWorldPos) {
+        Vector3 spawnPos = obsidianWorldPos + Vector3.up;
         Instantiate(targetPrefab, spawnPos, Quaternion.identity, transform);
+    }
+
+    public void RemoveObsidian() {
+        for (int x = 0; x < chunkSize; x++)
+            for (int y = 0; y < chunkSize; y++)
+                for (int z = 0; z < chunkSize; z++)
+                    if (chunkData[x, y, z].type == BlockPF.BlockType.OBSIDIAN)
+                        chunkData[x, y, z] = new BlockPF(BlockPF.BlockType.AIR, new Vector3(x, y, z));
+
+        foreach (Transform child in transform)
+            Destroy(child.gameObject);
+
+        DrawChunk();
     }
 
     void SetIfInBounds(int x, int y, int z, BlockPF.BlockType type) {
@@ -488,9 +509,17 @@ public class ChunkPF : MonoBehaviour {
                     block.AddFaceToMeshData(BlockPF.CubeFace.Bottom, vertices, triangles, uvs);
                     block.AddFaceToMeshData(BlockPF.CubeFace.Left, vertices, triangles, uvs);
                     block.AddFaceToMeshData(BlockPF.CubeFace.Right, vertices, triangles, uvs);
+
+                    // colisão das folhas, sem isto não há raycast/highlight/escavação possível
+                    block.AddFaceToMeshData(BlockPF.CubeFace.Front, colVerts, colTris, colUVs);
+                    block.AddFaceToMeshData(BlockPF.CubeFace.Back, colVerts, colTris, colUVs);
+                    block.AddFaceToMeshData(BlockPF.CubeFace.Top, colVerts, colTris, colUVs);
+                    block.AddFaceToMeshData(BlockPF.CubeFace.Bottom, colVerts, colTris, colUVs);
+                    block.AddFaceToMeshData(BlockPF.CubeFace.Left, colVerts, colTris, colUVs);
+                    block.AddFaceToMeshData(BlockPF.CubeFace.Right, colVerts, colTris, colUVs);
                 }
 
-        // Loop erva 
+        // Loop erva
         for (int x = 0; x < chunkSize; x++)
             for (int y = 0; y < chunkSize; y++)
                 for (int z = 0; z < chunkSize; z++) {

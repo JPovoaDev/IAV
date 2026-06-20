@@ -25,10 +25,7 @@ public class WorldManagerPF : MonoBehaviour {
     }
     //spawnar o agente ao pe do do jogador, para isso vamos buscar a posiçao do jogador e spawnar o agente a frente dele,
     //para isso vamos usar o right do jogador que é a direçao para a direita do jogador
-    void SpawnCompanion()
-    {
-        if (companionPrefab == null || player == null) return;
-
+    void SpawnCompanion() {
         Vector3 spawnPos = player.position + player.right * 1.5f;
         companionInstance = Instantiate(companionPrefab, spawnPos, Quaternion.identity);
 
@@ -67,7 +64,7 @@ public class WorldManagerPF : MonoBehaviour {
         foreach (var coord in needed) {
             if (!activeChunks.ContainsKey(coord)) {
                 ChunkPF c = SpawnChunk(coord);
-                
+
                 newChunks.Add(c);
                 //SpawnChunk(coord);
                 count++;
@@ -78,7 +75,7 @@ public class WorldManagerPF : MonoBehaviour {
                 // a corotina pare pelo menos os chunks sao desenhados.
             }
         }
-        
+
         foreach (var chunk in newChunks)
             chunk.DrawChunk();
     }
