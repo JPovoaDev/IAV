@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class CheckpointTriggerPF : MonoBehaviour {
     [Header("Identificação")]
-    public int checkpointIndex = 0;
+    public int checkpointIndex = 0; // a ordem em que tem de ser tocado, ver a validação no ParkourArenaPF
     public bool isGoal = false;
 
     [Header("Feedback visual")]

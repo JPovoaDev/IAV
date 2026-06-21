@@ -19,8 +19,8 @@ public class SaboteurAgentPF : Agent {
     public float timePenaltyPerStep = -0.0002f;
     public float stillPenaltyThreshold = 0.5f;
     public float stayStillPenalty = -0.001f;
-    public float targetFellReward = 0.3f;
-    public float checkpointReward = 0.3f;
+    public float targetFellReward = 0.3f; // recompensa principal: conseguir derrubar um alvo
+    public float checkpointReward = 0.3f; // mas também é avaliado a percorrer o percurso ele próprio
     public float goalReward = 1f;
 
     [HideInInspector] public int nextCheckpointIdx = 0;
@@ -30,7 +30,7 @@ public class SaboteurAgentPF : Agent {
 
     private Rigidbody rb;
     private bool canJump = false;
-    private Transform currentTarget;
+    private Transform currentTarget; // o ParkourAgentPF mais próximo neste momento
 
 
     public override void Initialize() {
@@ -65,6 +65,8 @@ public class SaboteurAgentPF : Agent {
     public void ResetState() => UpdateNearestTarget();
     public void OnTargetFell() => AddReward(targetFellReward);
 
+    // tem mais observações do que o ParkourAgentPF normal porque, para além de saber para
+    // onde ir no percurso, também precisa de saber onde está o alvo mais próximo para o conseguir perseguir e empurrar
     public override void CollectObservations(VectorSensor sensor) {
         UpdateNearestTarget();
 
@@ -128,6 +130,8 @@ public class SaboteurAgentPF : Agent {
     }
 
 
+    // ao colidir com um ParkourAgentPF, aplica um impulso na direção contrária e marca o alvo como "empurrado recentemente" (RegisterPush),
+    // para que se ele cair logo a seguir, o ParkourArenaPF saiba dar a recompensa ao saboteur em vez de tratar isso como uma queda normal do agente
     private void OnCollisionEnter(Collision collision) {
         if (collision.gameObject.CompareTag("Platform"))
             canJump = true;
@@ -151,7 +155,9 @@ public class SaboteurAgentPF : Agent {
     private void OnTriggerEnter(Collider other) {
         if (other.CompareTag("Checkpoint") || other.CompareTag("Goal")) {
             var cp = other.GetComponent<CheckpointTriggerPF>();
-            if (cp != null) arena.OnCheckpointHitSaboteur(cp);
+
+            if (cp != null) 
+                arena.OnCheckpointHitSaboteur(cp);
         }
         if (other.CompareTag("DeathZone"))
             arena.OnSaboteurFell();
@@ -161,10 +167,17 @@ public class SaboteurAgentPF : Agent {
     private void UpdateNearestTarget() {
         float minDist = float.MaxValue;
         currentTarget = null;
+
         foreach (var t in targets) {
-            if (t == null) continue;
+            if (t == null) 
+                continue;
+
             float dist = Vector3.Distance(transform.position, t.transform.position);
-            if (dist < minDist) { minDist = dist; currentTarget = t.transform; }
+
+            if (dist < minDist) { 
+                minDist = dist; 
+                currentTarget = t.transform; 
+            }
         }
     }
 }

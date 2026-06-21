@@ -1,6 +1,6 @@
 using System.Collections.Generic;
 
-// Lista de materiais aceites em apostas, do menos valioso (índice 0) ao mais valioso (último).
+// lista de materiais aceites em apostas, do menos valioso (índice 0) ao mais valioso (último)
 public class BlockRarityPF
 {
     public static List<BlockPF.BlockType> ordemDeRaridade = new List<BlockPF.BlockType>()

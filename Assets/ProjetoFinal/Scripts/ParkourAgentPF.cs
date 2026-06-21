@@ -6,17 +6,17 @@ using Unity.MLAgents.Actuators;
 [RequireComponent(typeof(Rigidbody))]
 public class ParkourAgentPF : Agent {
     [Header("Arena")]
-    public ParkourArenaPF arena;
+    public ParkourArenaPF arena; // quem trata dos eventos (caiu, chegou ao checkpoint, etc)
 
     [Header("Observações")]
-    public Transform nextPlatformTarget;
+    public Transform nextPlatformTarget; // atualizado pelo ParkourArenaPF sempre que passa um checkpoint
 
     [Header("Movimento")]
     public float moveSpeed = 4f;
     public float jumpForce = 5f;
 
     [Header("Recompensas")]
-    public float timePenaltyPerStep = -0.001f;
+    public float timePenaltyPerStep = -0.001f; // incentiva a não ficar a vaguear sem fazer nada
     public float stillPenaltyThreshold = 0.5f;
     public float stayStillPenalty = -0.002f;
     public float fallPenalty = 1f;
@@ -27,6 +27,9 @@ public class ParkourAgentPF : Agent {
     [HideInInspector] public Vector3 pendingSpawn;
     [HideInInspector] public bool hasPendingSpawn = false;
 
+    // controla se o agente foi empurrado recentemente pelo saboteur, para que se cair
+    // logo a seguir, a culpa (e a recompensa) vá para quem o empurrou e não conte como
+    // um erro do próprio agente
     [HideInInspector] public bool wasRecentlyPushed = false;
     private float pushTimer = 0f;
     private const float pushWindow = 2f;
@@ -40,6 +43,8 @@ public class ParkourAgentPF : Agent {
         rb.constraints = RigidbodyConstraints.FreezeRotation;
     }
 
+    // usado pelo ParkourArenaPF para reposicionar o agente sem deixar resíduos de
+    // velocidade do episódio anterior (senão ele "herdava" impulso e saía a voar)
     public void SetSpawnPosition(Vector3 pos) {
         rb.position = pos;
         rb.linearVelocity = Vector3.zero;
@@ -57,6 +62,7 @@ public class ParkourAgentPF : Agent {
         wasRecentlyPushed = false;
         pushTimer = 0f;
 
+        // se o ParkourArenaPF marcou um spawn pendente (ex: caiu e tem de voltar ao início) é aqui que isso é aplicado
         if (hasPendingSpawn) {
             transform.position = pendingSpawn;
             rb.position = pendingSpawn;
@@ -76,6 +82,10 @@ public class ParkourAgentPF : Agent {
         pushTimer = pushWindow;
     }
 
+    // o vetor de observações que o agente "vê" a cada step: a sua própria velocidade,
+    // a direção e distância até ao próximo checkpoint e a altura atual
+    // é com isto que a rede neuronal decide as ações, por isso é importante manter o número de
+    // observações sempre igual ao que está configurado no modelo treinado
     public override void CollectObservations(VectorSensor sensor) {
         Vector3 vel = rb.linearVelocity;
         sensor.AddObservation(vel.x / moveSpeed);                         // 1
@@ -100,6 +110,8 @@ public class ParkourAgentPF : Agent {
         float moveX = Mathf.Clamp(actions.ContinuousActions[0], -1f, 1f);
         float moveZ = Mathf.Clamp(actions.ContinuousActions[1], -1f, 1f);
 
+        // lerp em vez de aplicar a velocidade direta, dá um movimento mais suave e
+        // mais fácil de aprender (menos mudanças bruscas de velocidade por step)
         Vector3 targetVel = new Vector3(moveX * moveSpeed, rb.linearVelocity.y, moveZ * moveSpeed);
         rb.linearVelocity = Vector3.Lerp(rb.linearVelocity, targetVel, 0.3f);
 
@@ -115,10 +127,14 @@ public class ParkourAgentPF : Agent {
         if (speed2D < stillPenaltyThreshold)
             AddReward(stayStillPenalty);
 
+        // queda detetada por altura, não por trigger, porque é mais fácil e eficiente verificar
+        // isto todos os steps do que ter um collider gigante por baixo do mapa
         if (transform.position.y < -3f && !hasPendingSpawn)
             arena.OnAgentFell(this);
     }
 
+    // usado só para controlar manualmente um agente (testar o percurso à mão), não
+    // é usado quando os agentes já treinados estão a correr sozinhos na corrida do jogo
     public override void Heuristic(in ActionBuffers actionsOut) {
         var ca = actionsOut.ContinuousActions;
         var da = actionsOut.DiscreteActions;
@@ -137,6 +153,8 @@ public class ParkourAgentPF : Agent {
             canJump = false;
     }
 
+    // os checkpoints e o goal vêm do PlatformSpawnerPF (via ParkourArenaPF), por isso
+    // este script não sabe quantos há, só reage ao trigger que calhar tocar
     private void OnTriggerEnter(Collider other) {
         if (other.CompareTag("Checkpoint") || other.CompareTag("Goal")) {
             var cp = other.GetComponent<CheckpointTriggerPF>();

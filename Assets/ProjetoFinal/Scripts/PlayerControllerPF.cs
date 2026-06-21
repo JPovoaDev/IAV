@@ -92,17 +92,17 @@ public class PlayerControllerPF : MonoBehaviour {
         cc.Move(velocity * Time.deltaTime);
     }
 
-    // pega na posição dos pés do jogador, converte para coordenadas de chunk + coordenadas
-    // locais dentro do chunk e vai ver diretamente ao chunkData do ChunkPF se o
-    // bloco é água, é o mesmo sistema de coordenadas que o ChunkPF usa para gerar o terreno
     bool IsInWater() {
         // pés do jogador (centro é a metade da altura)
         Vector3 feetPos = transform.position + Vector3.up * 0.5f;
 
+        // apanhamos as posições do bloco em coordenadas globais e como o jogador pode ter coordenadas float convertemos para baixo em int
         int bx = Mathf.FloorToInt(feetPos.x);
         int by = Mathf.FloorToInt(feetPos.y);
         int bz = Mathf.FloorToInt(feetPos.z);
 
+        // agora apanhamos o chunk a que esse bloco pertence usando novamente o floor porque também podem haver coordenadas negativas
+        // por ex bloco -3 / 16 daria 0 se fosse para converter para int em vez de -1
         Vector2Int chunkCoord = new Vector2Int(
             Mathf.FloorToInt((float)bx / ChunkPF.chunkSize),
             Mathf.FloorToInt((float)bz / ChunkPF.chunkSize));
@@ -112,10 +112,17 @@ public class PlayerControllerPF : MonoBehaviour {
         if (chunk == null) 
             return false; // chunk ainda não gerado ou fora de alcance, assume que não há água
 
+        // agora apanhamos as coordenadas locais da posição do bloco dentro do chunk entre 0 e 15
+        // calculamos a partir da subtração da posição do canto do chunk em coords globais à posição global do bloco
+
+        // exemplo: bloco global 23, chunk 1. canto do chunk em 1*16 = 16 então lx = 23 -16 = 7
+        // isto é importante porque o array chunkData de cada chunk é sempre indexado de 0 a chunkSize-1 e então
+        // não sabe nada de coords globais, apenas que o bloco dele é o número 7
         int lx = bx - chunkCoord.x * ChunkPF.chunkSize;
         int ly = by;
         int lz = bz - chunkCoord.y * ChunkPF.chunkSize;
 
+        // se por algum motivo ly (a altura) sair fora de [0, chunkSize] evitamos um erro ao aceder ao array
         if (lx < 0 || lx >= ChunkPF.chunkSize || ly < 0 || ly >= ChunkPF.chunkSize || lz < 0 || lz >= ChunkPF.chunkSize) 
             return false;
 
