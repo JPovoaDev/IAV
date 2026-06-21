@@ -7,6 +7,7 @@ public class PortalManagerPF : MonoBehaviour
     [SerializeField] private GameObject prefabPortal;
     [SerializeField] private float distanciaSpawnPortal = 4f;
 
+    public GameObject endGame;
     private bool portalAvailable = false;
     private GameObject portalCriado;
     private Transform playerTransform;
@@ -14,7 +15,7 @@ public class PortalManagerPF : MonoBehaviour
     void Start()
     {
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player != null) playerTransform = player.transform;
+        playerTransform = player.transform;
     }
 
     void Update()
@@ -35,16 +36,20 @@ public class PortalManagerPF : MonoBehaviour
         }
 
         // DEBUG: dá 9 obsidianas instantaneamente
-        if (Input.GetKeyDown(KeyCode.O))
+        if (Input.GetKeyDown(KeyCode.Z))
             InventoryManagerPF.Instance.AddBlock(BlockPF.BlockType.OBSIDIAN, 9);
     }
 
     private void CriarPortal()
     {
-        if (portalCriado != null || prefabPortal == null || playerTransform == null) return;
+        if (portalCriado != null) return;
 
         Vector3 posicao = playerTransform.position + playerTransform.forward * distanciaSpawnPortal;
         portalCriado = Instantiate(prefabPortal, posicao, Quaternion.LookRotation(-playerTransform.forward));
         // Quaternion.LookRotation(-playerTransform.forward) faz o portal ficar de frente para o jogador
+
+        PortalInteracaoPF interacao = portalCriado.GetComponent<PortalInteracaoPF>();
+        if (interacao != null)
+            interacao.SetReferences(playerTransform, endGame);
     }
 }

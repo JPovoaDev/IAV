@@ -8,7 +8,7 @@ using Unity.MLAgents.Actuators;
 public class CompanionAgentPF : Agent
 {
     [Header("Referências")]
-    public Transform player;         
+    [HideInInspector] public Transform player;         
     public string targetTag = "Target"; // tag que as obseidianas têm
 
     [Header("Movimento")]
@@ -106,8 +106,6 @@ public class CompanionAgentPF : Agent
 
     private void FollowPlayer()
     {
-        if (player == null) return;
-
         // ponto alvo: offset FIXO no mundo a partir da nossa posição -> ele "voa" sempre à mesma distância
         Vector3 desiredPos = player.position + followOffset;
 

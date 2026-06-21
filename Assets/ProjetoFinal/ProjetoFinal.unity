@@ -267,6 +267,11 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &396918258 stripped
+GameObject:
+  m_CorrespondingSourceObject: {fileID: 7948225612635513325, guid: 50f2045e7acaa5948924a8f8b6c77187, type: 3}
+  m_PrefabInstance: {fileID: 2301757362106231434}
+  m_PrefabAsset: {fileID: 0}
 --- !u!1 &410087039
 GameObject:
   m_ObjectHideFlags: 0
@@ -600,6 +605,7 @@ MonoBehaviour:
   portalPromptText: {fileID: 1714005886}
   prefabPortal: {fileID: 5735599035762127620, guid: 5b3085986e432484aabc9774322e8738, type: 3}
   distanciaSpawnPortal: 4
+  endGame: {fileID: 396918258}
 --- !u!4 &1471677701
 Transform:
   m_ObjectHideFlags: 0

@@ -207,6 +207,12 @@ MonoBehaviour:
   player: {fileID: 7060926887238600895, guid: facc254e359908a42bcc1d908132e848, type: 3}
   targetTag: Target
   moveSpeed: 5
-  followDistance: 1.5
   catchDistance: 1
+  followOffset: {x: 1.5, y: 2, z: -1}
+  arriveThreshold: 0.1
+  rotationSpeed: 8
   seekKey: 101
+  seekTimeout: 8
+  isSeeking: 0
+  currentTarget: {fileID: 0}
+  seekTimer: 0

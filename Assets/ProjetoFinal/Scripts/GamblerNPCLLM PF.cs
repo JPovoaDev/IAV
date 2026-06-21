@@ -73,12 +73,9 @@ public class GamblerNPCLLMPF : MonoBehaviour
 
     void Update()
     {
-        if (playerTransform == null) return;
-
         bool dialogoFechado = !painelDialogo.activeSelf;
         bool perto = Vector3.Distance(transform.position, playerTransform.position) <= distanciaInteracao;
 
-        if (dicaInteracao != null)
             dicaInteracao.SetActive(perto && dialogoFechado && estado == EstadoNPC.Parado);
 
         if (perto && dialogoFechado && estado == EstadoNPC.Parado && Input.GetKeyDown(teclaInteragir))
@@ -94,19 +91,13 @@ public class GamblerNPCLLMPF : MonoBehaviour
         }
     }
 
-    void Start()
-    {
+    void Start() {
         painelDialogo.SetActive(false);
 
-        if (dicaInteracao != null)
-            dicaInteracao.SetActive(false);
-        if (playerTransform == null)
-        {
-            GameObject player = GameObject.FindGameObjectWithTag("Player");
+        dicaInteracao.SetActive(false);
+        GameObject player = GameObject.FindGameObjectWithTag("Player");
 
-            if (player != null)
-                playerTransform = player.transform;
-        }
+        playerTransform = player.transform;
     }
 
     private bool temItemPendente = false;
@@ -151,7 +142,7 @@ public class GamblerNPCLLMPF : MonoBehaviour
     private void MostrarInput(bool mostrar)
     {
         campoInput.gameObject.SetActive(mostrar);
-        if (botaoEnviar != null) botaoEnviar.SetActive(mostrar);
+        botaoEnviar.SetActive(mostrar);
 
         if (mostrar)
         {

@@ -23,14 +23,14 @@ public class WorldManagerPF : MonoBehaviour {
         UpdateChunks();
         SpawnCompanion();
     }
+
     //spawnar o agente ao pe do do jogador, para isso vamos buscar a posiçao do jogador e spawnar o agente a frente dele,
     //para isso vamos usar o right do jogador que é a direçao para a direita do jogador
     void SpawnCompanion() {
         Vector3 spawnPos = player.position + player.right * 1.5f;
         companionInstance = Instantiate(companionPrefab, spawnPos, Quaternion.identity);
-
         CompanionAgentPF companion = companionInstance.GetComponent<CompanionAgentPF>();
-        if (companion != null) companion.player = player;
+        companion.player = player;
     }
 
     void Update() {

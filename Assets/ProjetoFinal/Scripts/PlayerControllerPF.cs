@@ -4,28 +4,28 @@ using UnityEngine.InputSystem;
 public class PlayerControllerPF : MonoBehaviour {
 
     [Header("Movimento")]
-    public float walkSpeed = 5f;         // Velocidade horizontal em m/s
-    public float jumpHeight = 1.2f;      // Altura máxima do salto em metros
-    public float gravity = -20f;         // Aceleração gravitacional (negativo = para baixo)
+    public float walkSpeed = 5f;
+    public float jumpHeight = 1.2f;
+    public float gravity = -20f;
 
     [Header("Câmara / Look")]
-    public Transform cameraTransform;    // Arrastar o filho Camera aqui
-    public float mouseSensitivity = 2f;  // Sensibilidade do rato
+    public Transform cameraTransform;
+    public float mouseSensitivity = 2f;
 
     private CharacterController cc;
-    private Vector3 velocity;            // Velocidade acumulada (usada para gravidade + salto)
-    private float xRotation = 0f;        // Rotação vertical da câmara (clamped)
+    private Vector3 velocity;
+    private float xRotation = 0f; // rotação vertical da câmara (clamped)
 
     [Header("Água")]
     public WorldManagerPF worldManager;
-    public float waterGravity = -3f;    // gravidade tipo lua dentro de água
-    public float waterSpeed = 3f;     // movimento mais lento na água
+    public float waterGravity = -3f; // gravidade mais leve dentro de água
+    public float waterSpeed = 3f; // movimento mais lento na água
 
 
     void Start() {
         cc = GetComponent<CharacterController>();
 
-        // Bloquear e esconder o cursor
+        // bloquear e esconder o cursor
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
     }
@@ -33,8 +33,11 @@ public class PlayerControllerPF : MonoBehaviour {
     void Update() {
         HandleLook();
         HandleMovement();
-        
-        if (GamblerNPCLLMPF.DialogoAberto) return; // não tocar no cursor enquanto o diálogo está aberto
+
+        // enquanto o jogador está a falar com o agente de apostas o cursor
+        // tem de ficar livre para clicar nos botões, por isso saímos daqui sem voltar a trancar o cursor
+        if (GamblerNPCLLMPF.DialogoAberto) 
+            return; // não tocar no cursor enquanto o diálogo está aberto
 
         Cursor.lockState = CursorLockMode.Locked;
         Cursor.visible = false;
@@ -44,12 +47,12 @@ public class PlayerControllerPF : MonoBehaviour {
         float mouseX = Input.GetAxis("Mouse X") * mouseSensitivity;
         float mouseY = Input.GetAxis("Mouse Y") * mouseSensitivity;
 
-        // Rotação vertical — aplicada à câmara, não ao corpo
+        // rotação vertical aplicada à câmara, não ao corpo
         xRotation -= mouseY;
-        xRotation = Mathf.Clamp(xRotation, -90f, 90f);  // impede virar ao contrário
+        xRotation = Mathf.Clamp(xRotation, -90f, 90f); // impede virar ao contrário
         cameraTransform.localRotation = Quaternion.Euler(xRotation, 0f, 0f);
 
-        // Rotação horizontal — roda o corpo inteiro
+        // rotação horizontal, roda o corpo inteiro
         transform.Rotate(Vector3.up * mouseX);
     }
 
@@ -60,6 +63,8 @@ public class PlayerControllerPF : MonoBehaviour {
         bool grounded = cc.isGrounded;
         bool inWater = IsInWater();
 
+        // troca os valores de gravidade/velocidade consoante o jogador está dentro de
+        // água ou não para a sensação de "flutuar"
         float currentGravity = inWater ? waterGravity : gravity;
         float currentSpeed = inWater ? waterSpeed : walkSpeed;
 
@@ -87,8 +92,11 @@ public class PlayerControllerPF : MonoBehaviour {
         cc.Move(velocity * Time.deltaTime);
     }
 
+    // pega na posição dos pés do jogador, converte para coordenadas de chunk + coordenadas
+    // locais dentro do chunk e vai ver diretamente ao chunkData do ChunkPF se o
+    // bloco é água, é o mesmo sistema de coordenadas que o ChunkPF usa para gerar o terreno
     bool IsInWater() {
-        // pés do jogador (centro - metade da altura)
+        // pés do jogador (centro é a metade da altura)
         Vector3 feetPos = transform.position + Vector3.up * 0.5f;
 
         int bx = Mathf.FloorToInt(feetPos.x);
@@ -100,20 +108,18 @@ public class PlayerControllerPF : MonoBehaviour {
             Mathf.FloorToInt((float)bz / ChunkPF.chunkSize));
 
         ChunkPF chunk = worldManager.GetChunk(chunkCoord);
-        if (chunk == null) return false;
+
+        if (chunk == null) 
+            return false; // chunk ainda não gerado ou fora de alcance, assume que não há água
 
         int lx = bx - chunkCoord.x * ChunkPF.chunkSize;
         int ly = by;
         int lz = bz - chunkCoord.y * ChunkPF.chunkSize;
 
-        if (lx < 0 || lx >= ChunkPF.chunkSize ||
-            ly < 0 || ly >= ChunkPF.chunkSize ||
-            lz < 0 || lz >= ChunkPF.chunkSize) return false;
+        if (lx < 0 || lx >= ChunkPF.chunkSize || ly < 0 || ly >= ChunkPF.chunkSize || lz < 0 || lz >= ChunkPF.chunkSize) 
+            return false;
 
         return chunk.chunkData[lx, ly, lz].type == BlockPF.BlockType.WATER;
     }
-    private void OnControllerColliderHit(ControllerColliderHit hit)
-    {
-        Debug.Log("CharacterController tocou em: " + hit.gameObject.name);
-    }
+
 }
