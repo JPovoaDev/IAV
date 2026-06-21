@@ -33,6 +33,11 @@ public class PlayerControllerPF : MonoBehaviour {
     void Update() {
         HandleLook();
         HandleMovement();
+        
+        if (GamblerNPCLLMPF.DialogoAberto) return; // não tocar no cursor enquanto o diálogo está aberto
+
+        Cursor.lockState = CursorLockMode.Locked;
+        Cursor.visible = false;
     }
 
     void HandleLook() {
@@ -106,5 +111,9 @@ public class PlayerControllerPF : MonoBehaviour {
             lz < 0 || lz >= ChunkPF.chunkSize) return false;
 
         return chunk.chunkData[lx, ly, lz].type == BlockPF.BlockType.WATER;
+    }
+    private void OnControllerColliderHit(ControllerColliderHit hit)
+    {
+        Debug.Log("CharacterController tocou em: " + hit.gameObject.name);
     }
 }

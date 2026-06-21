@@ -22,7 +22,7 @@ public class ArenaRegistryPF : MonoBehaviour {
     void SpawnCapsule(Vector3 spawnPos, GameObject chunkObject) {
         GameObject capsule = Instantiate(capsulePrefab, spawnPos, Quaternion.identity);
 
-        GamblerNPCPF gambler = capsule.GetComponent<GamblerNPCPF>();
+        GamblerNPCLLMPF gambler = capsule.GetComponent< GamblerNPCLLMPF > ();
         gambler.playerTransform = player;
         gambler.voxelArenaObject = chunkObject;
     }

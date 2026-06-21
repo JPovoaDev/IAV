@@ -11,9 +11,7 @@ public class ChatMessage
 {
     public string role;
     public string content;
-}
 
-[Serializable]
 public class ChatRequest
 {
     public string model;
@@ -21,7 +19,7 @@ public class ChatRequest
     public bool stream;
 }
 
-[Serializable]
+
 public class ChatResponse
 {
     public ChatMessage message;
